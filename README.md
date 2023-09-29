@@ -122,6 +122,9 @@ touch_demo1 help to test the touch pin.
 It will output a value that changes with and without contact. 
 Use this to adjust the threshold value.
 
+## high frequency problem
+If there is a high frequency problem, an RF filter can be connected to the line. simple low pass.
+
 
 
 ## References
@@ -132,7 +135,7 @@ Use this to adjust the threshold value.
 
 ## Hardware
 
-Self-built in oak and brass
+Self-built in oak and brass.
+all Buttons are touch.
 
 ![schematic](./keyer1.jpg)
-![schematic](./keyer2.jpg)
