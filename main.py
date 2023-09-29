@@ -195,24 +195,6 @@ MAP('.--.-.','@') # at sign
 
 
 
-class poti_adc():
-    
-    '''
-    24.7.2022
-    simple pin read poti
-    #
-    is not in use, wpm change with paddel 
-    '''
-
-    def __init__(self,poti_pin):
-        self.pot = ADC(Pin(poti_pin))
-        self.pot.atten(ADC.ATTN_11DB)
-        
-        
-        
-    def wpm(self):
-        self.pot_value = self.pot.read()
-        return(self.pot_value//100+5)
 
 class watch_ideal():
     '''
@@ -243,7 +225,7 @@ class tx_opt():
         self.tx_opt_pin = Pin(tx_pin,Pin.OUT)
         self.on_off = 1
         
-        #self.tx_opt_pin = Pin(10, Pin.OUT)
+        
         
     def on(self):
         self.on_off = 1
@@ -263,10 +245,8 @@ class command_button():
     7.8.2022 touch key
     '''
 
-    def __init__(self,pin_button,led1,led2):
-        #GPIO welcher als PWM Pin benutzt werden soll
-        
-        #self.button =  Pin(pin_button,Pin.IN,Pin.PULL_UP)
+    def __init__(self, tcommand,twpm,led1,led2):
+         
         self.led1   =  Pin(led1, Pin.OUT)
         self.led2   =  Pin(led2, Pin.OUT)
         
@@ -278,8 +258,9 @@ class command_button():
         self.comannd_state_wpm_cq = 0 # im keyer mode
         
         
-        self.touchcommand=TouchPad(Pin(27))
-        self.touchwpm=TouchPad(Pin(14))
+        
+        self.touchcommand=TouchPad(Pin(tcommand))
+        self.touchwpm=TouchPad(Pin(twpm))
 #         
 #         self.save_tfreq =  cwt.tonfreq()
 #         self.ton_freq_command = cwt.tonfreq_command()
@@ -533,13 +514,14 @@ x -> exit Command mode
 
 """
     
-    def __init__(self,dit_key,dah_key):
-        self.dit_key = Pin(dit_key,Pin.IN,Pin.PULL_UP)
-        self.dah_key = Pin(dah_key,Pin.IN,Pin.PULL_UP)
+    def __init__(self,tdit,tdah):
+         
         
-        self.touchdit=TouchPad(Pin(32)) 
-        self.touchdah=TouchPad(Pin(33))
+       # self.touchdit=TouchPad(Pin(32)) 
+       # self.touchdah=TouchPad(Pin(33))
         
+        self.touchdit=TouchPad(Pin(tdit)) 
+        self.touchdah=TouchPad(Pin(tdah))
         
       
         self.dit = False ; self.dah = False
@@ -600,7 +582,12 @@ x -> exit Command mode
         
         self.iambic_data = {} # create date store
         self.read_jsondata()
-        print("....read button.......default data")
+        print("....read button....... from json-file")
+        
+        self.wpm = self.iambic_data["wpm"]
+        cw_time.set_wpm(self.wpm)
+        
+        
         if cb.button_press() == 0: # not press "0" -> json date read,and init, if "0" use factory setting 
             print("**** default data")
             #self.read_jsondata()
@@ -627,6 +614,7 @@ x -> exit Command mode
             self.data = ujson.load(json_file)
 
         self.iambic_data = ujson.loads(self.data)
+        
         
     def write_jsondata(self): # write new json file
         print("write_jsondata")
@@ -695,7 +683,7 @@ x -> exit Command mode
         
         if (self.touch_val <= 200):
            return(self.LOW)
-       #return(self.dit_key.value())
+        
     
     def state_key_dah(self):
        
@@ -709,7 +697,7 @@ x -> exit Command mode
         
         if (self.touch_val <= 200):
            return(self.LOW)
-       #return(self.dit_key.value())
+        
     
 
         
@@ -951,15 +939,7 @@ x -> exit Command mode
                             if self.tune:
                                 text2cw("on")
                                 
-                        elif  Char == "w" : # WPM Change Speed )
-                            ble.print_ble("w WP Change",cb.comannd_state)
-                            if self.request == 1:
-                                text2cw(str(self.wpm))
-                            
-                            else:
-                                self.adj_wpm = 1   
-                                if self.tune:
-                                    text2cw("on")
+                        
                                     
                         elif  Char == "v" : # sidetone volume controll
                             ble.print_ble("v sidetone volume",cb.comannd_state)
@@ -1138,17 +1118,18 @@ def text2cw(str):
 
 # Setup Hardware pin on esp32
 
-comand_button    = 15  #not use
+ 
 onboard_led      = 2 
-extern_led       = 23 
+extern_led_pin   = 23 
 tx_opt_pin       = 4 
-tx_pin           = 4 
-
 cw_sound_pin     = 12
-paddle_left_pin  = 15  #not use
-paddle_right_pin = 15  #not use
 
-poti_pin         = 34 
+touchPad_dit_pin = 32
+touchPad_dah_pin = 33
+
+touchPad_command_pin  = 27
+touchPad_wpm_pin      = 14
+ 
 #----------------------------------------
 
 i2c = machine.I2C(1, scl = machine.Pin(18), sda = machine.Pin(19), freq = 400000)  #esp32
@@ -1171,17 +1152,16 @@ print("keyer")
 w_ideal = watch_ideal()
 
 
-poti = poti_adc(poti_pin)
+ 
 txopt   = tx_opt(tx_opt_pin)
 cwt = cw_sound(cw_sound_pin)
-cw_time = cw_timing(18)
+
+cw_time = cw_timing(18) # classe "cwtiming" are use, def wpm18 or defition from json  file
 
 
 
-
-
-cb      = command_button(comand_button,onboard_led,extern_led)
-iambic  = Iambic(paddle_left_pin,paddle_right_pin)
+cb      = command_button(touchPad_command_pin,touchPad_wpm_pin,onboard_led,extern_led_pin)
+iambic  = Iambic(touchPad_dit_pin,touchPad_dah_pin)
 
 text2cw("r") #ready
 
