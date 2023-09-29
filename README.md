@@ -59,13 +59,10 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 ## Software Installation
 
 1. Install Thonny on your PC/MAC 
-https://projects.raspberrypi.org/en/projects/getting-started-with-the-pico/2
-2. connect to a Raspberry Pi Pico on USB
-3. copy imabic_keyer_rp2040.py and json_iambic.json to rp2040
-4. open the file imabic_keyer_rp2040.py and test the keyer
-5. when everything works as intended, save the program as main.py
-
-6. if the  json file is wrong, you can start in factorymode (hold command button while booting)
+2. connect to a esp32 to USB
+3. copy all file to esp32
+4. when everything works as intended, save the program as main.py
+5. if the  json file is wrong, you can start in factorymode (hold command button while booting)
 
 
 
@@ -119,6 +116,14 @@ Some Ideas / options on demand:
 *  
 *  
 
+## touch_demo1
+
+touch_demo1 help to test the touch pin.
+It will output a value that changes with and without contact. 
+Use this to adjust the threshold value.
+
+
+
 ## References
 
 * MarkWoodworth xiaokey https://github.com/MarkWoodworth/xiaokey
@@ -128,5 +133,6 @@ Some Ideas / options on demand:
 ## Hardware
 
 Self-built in oak and brass
+
 ![schematic](./keyer1.jpg)
 ![schematic](./keyer2.jpg)
