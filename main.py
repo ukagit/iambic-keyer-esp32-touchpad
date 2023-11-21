@@ -1,3 +1,4 @@
+# bluetooth module gelöscht
 # esp32 Version 24.12.2022 save data in filesystem
 # esp32 Version  25.07.2022 poti wpm
 # esp32 Version  22.07.2022
@@ -26,13 +27,13 @@
 from machine import Pin, Timer, PWM, ADC, I2C
 import ssd1306
 import writer
-import framebuf
-import freesans20
+#import framebuf
+#import freesans20
 
 import machine
 
 from machine import TouchPad
-from machine import deepsleep
+#from machine import deepsleep
 from time import sleep
 import esp32
 
@@ -43,99 +44,15 @@ import utime # utime is the micropython brother of time
 import time
 import ujson
 
-import ubluetooth
- 
-ble_msg = ""
-is_ble_connected = False
 
-class ESP32_BLE():
-    def __init__(self, name):
-        # Create internal objects for the onboard LED
-        # blinking when no BLE device is connected
-        # stable ON when connected
-        self.led = Pin(2, Pin.OUT)
-        self.timer1 = Timer(0)
-        
-        self.name = name
-        self.ble = ubluetooth.BLE()
-        self.ble.active(True)
-        self.disconnected()
-        self.ble.irq(self.ble_irq)
-        self.register()
-        self.advertiser()
-
-    def connected(self):
-        global is_ble_connected
-        is_ble_connected = True
-        self.led.value(1)
-        self.timer1.deinit()
-
-    def disconnected(self):
-        global is_ble_connected
-        is_ble_connected = False
-        self.timer1.init(period=100, mode=Timer.PERIODIC, callback=lambda t: self.led.value(not self.led.value()))
-
-    def ble_irq(self, event, data):
-        global ble_msg
-        
-        if event == 1: #_IRQ_CENTRAL_CONNECT:
-                       # A central has connected to this peripheral
-            self.connected()
-
-        elif event == 2: #_IRQ_CENTRAL_DISCONNECT:
-                         # A central has disconnected from this peripheral.
-            self.advertiser()
-            self.disconnected()
-        
-        elif event == 3: #_IRQ_GATTS_WRITE:
-                         # A client has written to this characteristic or descriptor.          
-            buffer = self.ble.gatts_read(self.rx)
-            ble_msg = buffer.decode('UTF-8').strip()
-            
-    def register(self):        
-        # Nordic UART Service (NUS)
-        NUS_UUID = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E'
-        RX_UUID = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'
-        TX_UUID = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'
-            
-        BLE_NUS = ubluetooth.UUID(NUS_UUID)
-        BLE_RX = (ubluetooth.UUID(RX_UUID), ubluetooth.FLAG_WRITE)
-        BLE_TX = (ubluetooth.UUID(TX_UUID), ubluetooth.FLAG_NOTIFY)
-            
-        BLE_UART = (BLE_NUS, (BLE_TX, BLE_RX,))
-        SERVICES = (BLE_UART, )
-        ((self.tx, self.rx,), ) = self.ble.gatts_register_services(SERVICES)
-
-    def send(self, data):
-        self.ble.gatts_notify(0, self.tx, data + '\n')
-        
-
-    def advertiser(self):
-        name = bytes(self.name, 'UTF-8')
-        adv_data = bytearray('\x02\x01\x02') + bytearray((len(name) + 1, 0x09)) + name
-        self.ble.gap_advertise(100, adv_data)
-        print(adv_data)
-        print("\r\n")
-                # adv_data
-                # raw: 0x02010209094553503332424C45
-                # b'\x02\x01\x02\t\tESP32BLE'
-                #
-                # 0x02 - General discoverable mode
-                # 0x01 - AD Type = 0x01
-                # 0x02 - value = 0x02
-                
-                # https://jimmywongiot.com/2019/08/13/advertising-payload-format-on-ble/
-                # https://docs.silabs.com/bluetooth/latest/general/adv-and-scanning/bluetooth-adv-data-basics
-
-    def print_ble(self,data,inv):
+class OLED_Print():
+    def print_smal(self,data,inv):
         print(data)
         oled.fill(0)
         oled.invert(inv)
         oled.text(data, 0, 0)
         oled.show()
-        if is_ble_connected:
-            self.send(data)
-    
+        
     def print_big(self,data,inv):
         oled.fill(0)
         #oled.text("test",5,5)
@@ -143,8 +60,9 @@ class ESP32_BLE():
         font_writer.set_textpos(5,20)
         font_writer.printstring(data)
         oled.show()
+    
+oe = OLED_Print()
 
-ble = ESP32_BLE("ESP32BLE_CW")
 
     
 
@@ -313,7 +231,7 @@ class command_button():
         self.comannd_state =  0
         self.led1(self.comannd_state)
         self.led2(self.comannd_state)
-        ble.print_ble("command:off",self.comannd_state)
+        oe.print_smal("command:off",self.comannd_state)
         iambic.write_jsondata() # save parameter afer change
         iambic.char = ""
         iambic.word = ""
@@ -334,7 +252,7 @@ class command_button():
              self.led1(not self.comannd_state)
              
              self.comannd_state =  not self.comannd_state
-             ble.print_ble("Command:"+str(self.comannd_state),self.comannd_state)
+             oe.print_smal("Command:"+str(self.comannd_state),self.comannd_state)
              
              if not self.comannd_state:
                  self.button_command_off()
@@ -383,13 +301,13 @@ class command_button():
              if self.comannd_state_wpm_cq :
                  
                  cw_time.set_wpm(iambic.wpm)
-                 ble.print_ble("Command_mode_wpm:"+str(self.comannd_state_wpm),1)
-                 ble.print_big("WPM:  "+str(iambic.wpm),1)
+                 oe.print_smal("Command_mode_wpm:"+str(self.comannd_state_wpm),1)
+                 oe.print_big("WPM:  "+str(iambic.wpm),1)
                  cb.comannd_state = 1
                  
              else:
                  
-                 ble.print_big("cq",1)
+                 oe.print_big("cq",1)
                           
              
         return(self.button_save_wpm)
@@ -633,17 +551,17 @@ x -> exit Command mode
     def print_parameter(self): # write new json file
         #print("write_jsondata")
         
-        ble.print_ble("---Paramter",0)
-        ble.print_ble("iambic_mode     :" + str(self.iambic_mode),0) # transmit
-        ble.print_ble("wpm             :" +str(self.wpm),0)
+        oe.print_smal("---Paramter",0)
+        oe.print_smal("iambic_mode     :" + str(self.iambic_mode),0) # transmit
+        oe.print_smal("wpm             :" +str(self.wpm),0)
         
-        ble.print_ble("sidetone_enable :" + str(self.sidetone_enable),0)
-        ble.print_ble("sidetone_freq   :" +str(self.sidetone_freq),0)
-        ble.print_ble("sidetone_volume :" +str(self.sidetone_volume),0)
+        oe.print_smal("sidetone_enable :" + str(self.sidetone_enable),0)
+        oe.print_smal("sidetone_freq   :" +str(self.sidetone_freq),0)
+        oe.print_smal("sidetone_volume :" +str(self.sidetone_volume),0)
           
-        ble.print_ble("tx_enamble      :" +str(self.tx_enable),0)
-        ble.print_ble("txt_emable      :" +str(self.txt_enable),0)
-        ble.print_ble("",0)
+        oe.print_smal("tx_enamble      :" +str(self.tx_enable),0)
+        oe.print_smal("txt_emable      :" +str(self.txt_enable),0)
+        oe.print_smal("",0)
      
         
         
@@ -721,7 +639,7 @@ x -> exit Command mode
         
         # clear display when ideal 
         if w_ideal.diff() >= 3 and cb.comannd_state == 0:
-            ble.print_big("",0)
+            oe.print_big("",0)
             w_ideal.update()
             
         
@@ -755,7 +673,7 @@ x -> exit Command mode
                     else:
                         self.sidetone_freq =self.sidetone_freq +10
                         cwt.set_tonfreq(self.sidetone_freq) # change the Freq
-                        ble.print_ble("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
+                        oe.print_smal("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
                         
                         play("-")
                 elif self.state_key_dit() == self.LOW: #transmit off
@@ -764,7 +682,7 @@ x -> exit Command mode
                     else:
                         self.sidetone_freq = self.sidetone_freq -10
                         cwt.set_tonfreq(self.sidetone_freq)
-                        ble.print_ble("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
+                        oe.print_smal("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
                         
                         play(".")
                 return
@@ -782,7 +700,7 @@ x -> exit Command mode
                     else:
                         self.sidetone_volume = self.sidetone_volume + 1
                         cwt.volume(self.sidetone_volume*200)
-                        ble.print_ble("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
+                        oe.print_smal("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
                         #print(self.sidetone_volume)
                         play("-")
                         
@@ -792,7 +710,7 @@ x -> exit Command mode
                     else:
                         self.sidetone_volume = self.sidetone_volume - 1
                         cwt.volume(self.sidetone_volume*200)
-                        ble.print_ble("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
+                        oe.print_smal("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
                         #print(self.sidetone_volume)
                         play(".")
                 return
@@ -809,14 +727,14 @@ x -> exit Command mode
                     if self.state_key_dah() == self.LOW: # transmit on
                         self.wpm = self.wpm+1
                         cw_time.set_wpm(self.wpm)
-                        ble.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
+                        oe.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
                         play(".")
                         
                     elif self.state_key_dit() == self.LOW: #transmit off
                         if self.wpm >= 10:
                             self.wpm = self.wpm-1
                         cw_time.set_wpm(self.wpm)
-                        ble.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
+                        oe.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
                         play(".")
                 else:
                     # cq mode
@@ -826,7 +744,7 @@ x -> exit Command mode
                         else:
                             self.cq = 0
                         
-                        ble.print_ble(""+ self.cq_liste[self.cq],cb.comannd_state)
+                        oe.print_smal(""+ self.cq_liste[self.cq],cb.comannd_state)
                         play(".")
                         
                     elif self.state_key_dit() == self.LOW: #transmit off
@@ -867,7 +785,7 @@ x -> exit Command mode
                     self.in_word = False
                     #print(utime.ticks_ms(),self.ktimer_end)
                     #print(self.word)
-                    ble.print_ble(self.word,0)
+                    oe.print_smal(self.word,0)
                     self.word = ""
             
             if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time()*1.5):
@@ -889,7 +807,7 @@ x -> exit Command mode
                         Char = decode(self.char)
 # comand mode ----------------                        
                         if  Char == "i" : # TX enable(on) disable(off)
-                            ble.print_ble("i tx enable",cb.comannd_state)
+                            oe.print_smal("i tx enable",cb.comannd_state)
                             if self.request == 1:
                                 
                                 if self.tx_enable :
@@ -900,11 +818,11 @@ x -> exit Command mode
                                 self.tx_enable = not self.tx_enable
                                 if self.tx_enable:
                                     txopt.on()
-                                    ble.print_ble("tx_enable:on",cb.comannd_state)
+                                    oe.print_smal("tx_enable:on",cb.comannd_state)
                                     text2cw("on")
                                 else:
                                     text2cw("off")
-                                    ble.print_ble("tx_enable:off",cb.comannd_state)
+                                    oe.print_smal("tx_enable:off",cb.comannd_state)
                                     txopt.off()
                                 #print("Transmit", self.tx_enable)
                                 cb.button_command_off()
@@ -912,7 +830,7 @@ x -> exit Command mode
                         
                                 
                         elif  Char == "o" : # TX enable(on) disable(off)
-                            ble.print_ble("o sidetone on/off",cb.comannd_state)
+                            oe.print_smal("o sidetone on/off",cb.comannd_state)
                             if self.request == 1:
                                 if self.sidetone_enable :
                                     text2cw("on")
@@ -924,17 +842,17 @@ x -> exit Command mode
                                 self.sidetone_enable = not self.sidetone_enable
                                 if self.sidetone_enable:
                                     cwt.onoff(1)
-                                    ble.print_ble("sideton_enable:on",cb.comannd_state)
+                                    oe.print_smal("sideton_enable:on",cb.comannd_state)
                                     text2cw("on")
                                 else:
                                     text2cw("off")
                                     cwt.onoff(0)
-                                    ble.print_ble("sideton_enable:off",cb.comannd_state)
+                                    oe.print_smal("sideton_enable:off",cb.comannd_state)
                                     cb.button_command_off()
                                 print("sidetone", self.tx_enable)
                                 
                         elif  Char == "t" : # tune mode
-                            ble.print_ble("T tune mode",cb.comannd_state)
+                            oe.print_smal("T tune mode",cb.comannd_state)
                             self.tune = 1
                             if self.tune:
                                 text2cw("on")
@@ -942,7 +860,7 @@ x -> exit Command mode
                         
                                     
                         elif  Char == "v" : # sidetone volume controll
-                            ble.print_ble("v sidetone volume",cb.comannd_state)
+                            oe.print_smal("v sidetone volume",cb.comannd_state)
                             if self.request == 1:
                                 text2cw(str(self.sidetone_volume))
                                 
@@ -950,11 +868,11 @@ x -> exit Command mode
                                 self.adj_sidetone_volume = 1
                             
                         elif  Char == "?" : # request of parameters
-                            ble.print_ble("? tx request of parameters",cb.comannd_state)
+                            oe.print_smal("? tx request of parameters",cb.comannd_state)
                             self.request = 1
                             
                         elif  Char == "/" : # command exit
-                                ble.print_ble("/ command exit",cb.comannd_state)
+                                oe.print_smal("/ command exit",cb.comannd_state)
                                 
                                 self.print_parameter()
                                 cwt.set2ton()
@@ -968,7 +886,7 @@ x -> exit Command mode
                                 
                                 
                         elif  Char == "f" : # adjust sidetone frequenz
-                            ble.print_ble("f adjust sidetone",cb.comannd_state)
+                            oe.print_smal("f adjust sidetone",cb.comannd_state)
                             if self.request == 1:
                                 text2cw(str(self.sidetone_freq))
                             else:
@@ -982,21 +900,21 @@ x -> exit Command mode
                                 else : text2cw("a")
                             
                         elif  Char == "a" : # 
-                                ble.print_ble("a set iambic a",cb.comannd_state)
+                                oe.print_smal("a set iambic a",cb.comannd_state)
                                 self.iambic_mode  = 0 #  0x10     # 0 for Iambic A, 1 for Iambic B
                                 cb.button_command_off()
                                 
                                 self.write_jsondata() # save parameter afer change
                                 
                         elif  Char == "s" : #  save parameter to  file
-                                ble.print_ble("s save parameter",cb.comannd_state)
+                                oe.print_smal("s save parameter",cb.comannd_state)
                                 self.write_jsondata() # save parameter afer change
                                 text2cw("save")
                                 cb.button_command_off()
                         
                                 
                         elif  Char == "b" : # adjust sidetone frequenz
-                                ble.print_ble("b set iambic b",cb.comannd_state)
+                                oe.print_smal("b set iambic b",cb.comannd_state)
                                 self.iambic_mode  = 0x10 #  0x10     # 0 for Iambic A, 1 for Iambic B
                                 cb.button_command_off()
                         else :

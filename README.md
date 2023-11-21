@@ -1,5 +1,7 @@
 # iambic keyer for es32 with touchPad
-29.sep.2023
+21.11.23 
+READY for new MicroPython v1.21.0 on 2023-10-05; 
+I update of my software, and deleted Bluetooth modules, because they no work with the new v1.21.0 version. I coud not identified the cause :-(
 
 
 IAMBIC keyer in micropython esp32
@@ -25,13 +27,9 @@ It is a minimalist device based on the micropython `code`  installed on esp32 wi
 No `pcb` board, simply solder connectors directly on esp32, and/or assemble it in a box
 
 ## Features
-
-class ESP32_BLE():
-    def __init__(self, name):
-        # Create internal objects for the onboard LED
-        # blinking when no BLE device is connected
-        # stable ON when connected
-
+ i2csan.py  for setting up test og the I2C display
+ touch_demo for test the tosch key
+ 
 Command
 
 Hit the command button and use a morse letter. The definition is copy from kn3g keyer, which I have been using for 5 years 
