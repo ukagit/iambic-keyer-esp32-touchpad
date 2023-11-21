@@ -94,7 +94,7 @@ touchPad_dah_pin = 33
 touchPad_command_pin  = 27
 touchPad_wpm_pin      = 14
 ```
-
+![schematic](./optocopler.jpg)
 
 ## Assembly and Bill of Materials
 
