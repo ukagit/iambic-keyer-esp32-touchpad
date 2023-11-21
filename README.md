@@ -27,8 +27,8 @@ It is a minimalist device based on the micropython `code`  installed on esp32 wi
 No `pcb` board, simply solder connectors directly on esp32, and/or assemble it in a box
 
 ## Features
- i2csan.py  for setting up test og the I2C display
- touch_demo for test the tosch key
+* i2csan.py  for HW test of the I2C display 
+* touch_demo for test the touch key
  
 Command
 
