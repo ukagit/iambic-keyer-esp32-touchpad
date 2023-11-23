@@ -50,7 +50,7 @@ IAMBIC keyer in micropython esp32
 * Transmit by LED
 * Transmit by optocoupler
 *
-* bluetooth print text from keyer and command infos
+* wifi and ntptime
 
  
 
@@ -84,6 +84,8 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 * t -> tune mode, end with command mode
 * s -> save parameter to  file
 
+* c -> show time
+* d -> show date
 
 * / -> print json data file 
 
@@ -117,6 +119,15 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 If you enter a letter incorrectly or the character spacing is not correct, the character will not be recognized and a ? attached
 
 (-.-.--.-?) is not  (-.-.) (--.-) cq
+
+## WIFI and NTP for Clock 
+
+esp32 wifi is aktive to get NTP requet
+set your data
+# user data for WIFI
+ssid = "your_wifi_ssid"
+pw = "your_wifi_pw"
+
 
 ## Configuration
 Main parameters are set up in json file.

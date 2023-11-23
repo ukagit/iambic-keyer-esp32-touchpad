@@ -28,6 +28,7 @@
 
 
 from machine import Pin, Timer, PWM, ADC, I2C
+import network, usocket, utime, ntptime
 import ssd1306
 import writer
 #import framebuf
@@ -45,6 +46,13 @@ import esp32
 import utime # utime is the micropython brother of time
 import time
 import ujson
+
+# wifi 23.11.23
+
+# user data for WIFI
+ssid = "your_wifi_ssid"
+pw = "your_wifi_pw"
+
 
 
 class OLED_Print():
@@ -873,6 +881,33 @@ x -> exit Command mode
                             self.tune = 1
                             if self.tune:
                                 text2cw("on")
+                        # Get current time in UTC
+                        elif  Char == "c" : # clock mode
+
+                            current_time = utime.gmtime()
+
+                            # Format the time
+                            formatted_time = "   {:02}:{:02}:{:02}".format(
+                                current_time[3],  # hour
+                                current_time[4],  # minute
+                                current_time[5]  # second
+                                
+                            )
+                            oe.print_big(formatted_time,cb.comannd_state)
+                            sleep(2)
+                        elif  Char == "d" : # day mode
+                            
+                            current_time = utime.gmtime()
+
+                            # Format the time
+                            formatted_time = "   {:02}.{:02}.{:02}".format(
+                                current_time[2],  # day
+                                current_time[1],  # month
+                                current_time[0]   # year
+                            )
+                            oe.print_big(formatted_time,cb.comannd_state)
+                            sleep(2)
+
                                 
                         
                                     
@@ -1075,8 +1110,58 @@ oled = ssd1306.SSD1306_I2C(oled_width, oled_height, i2c)
 oled.rotate(0)
 
 
-oled.text('start DL2DBG', 0, 0)
+oled.text('start', 0, 0)
 oled.show()
+
+
+# connect to wifi
+print("Connecting to WiFi...")
+oled.text('wifi not Connected', 0, 9)
+oled.show()
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+
+
+try:
+    # WLAN-Verbindung herstellen
+    wifi.active(True)
+    wifi.connect(ssid, pw)
+
+    # Warten, bis die Verbindung hergestellt ist
+    while not wifi.isconnected():
+        pass
+
+    # WLAN-Verbindung hergestellt
+    print("Verbunden mit WLAN:", ssid)
+
+except Exception as e:
+    # Fehler beim Verbinden mit dem WLAN
+    oled.text('wifi not Connected', 0, 9)
+    oled.show()
+    sleep(1)
+    print("Fehler beim Verbinden mit WLAN:", e)
+    
+
+
+if wifi.isconnected():
+    print(" Connected.")
+    
+    
+    oled.text('wifi Connected', 0, 9)
+    oled.text(wifi.ifconfig()[0], 0,24 )
+    oled.show()
+    sleep(1)
+
+    try:
+        # update system time from NTP server
+        ntptime.settime()
+        print("NTP server query successful.")
+        print("System time updated:", utime.localtime())
+        update_time = utime.ticks_ms()
+        
+                
+    except:
+        print("NTP server query failed.")
 
 #paddle instance
 print("keyer")
@@ -1105,4 +1190,3 @@ while True:
       iambic.cycle()
     #text2cw("v")
     
-f
