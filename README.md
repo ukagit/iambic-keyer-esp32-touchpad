@@ -92,6 +92,20 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 
 * x -> exit command mode
 
+## command for send memory text 
+
+* 1. Press WPM button
+
+* 2. Dash key for the following memory locations (dot is issued as a receipt)
+
+* 3rd point button starts memory text, (!! but adds a point at the end)
+
+* 4. another point calls up the memory text again
+
+* 5. Command key to exit memory text recall mode.
+
+* 6. Calling up the WPM button again: the last used text memory space is made available, a period key calls up this text memory and outputs it. (with a period after)
+
 
 ## Software Installation
 
