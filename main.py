@@ -1,4 +1,7 @@
-# bluetooth module gelöscht
+# 23.11.23 self.cq_liste and threshold_key in json file include
+# 21.11.23 ready for new version MicroPython v1.21.0 on 2023-10-05
+# bluetooth module gelöscht, lief mit der neuen version MicroPython v1.21.0 on 2023-10-05; fehler nicht gefunden??
+#
 # esp32 Version 24.12.2022 save data in filesystem
 # esp32 Version  25.07.2022 poti wpm
 # esp32 Version  22.07.2022
@@ -28,7 +31,7 @@ from machine import Pin, Timer, PWM, ADC, I2C
 import ssd1306
 import writer
 #import framebuf
-#import freesans20
+import freesans20  #FreeSans Font 
 
 import machine
 
@@ -36,7 +39,6 @@ from machine import TouchPad
 #from machine import deepsleep
 from time import sleep
 import esp32
-
 
 
  
@@ -174,7 +176,7 @@ class command_button():
         self.comannd_state = 1 # im keyer mode
         self.comannd_state_wpm = 0 # im keyer mode
         self.comannd_state_wpm_cq = 0 # im keyer mode
-        
+        self.threshold_key_command = 201 # hard codet not im json file 
         
         
         self.touchcommand=TouchPad(Pin(tcommand))
@@ -196,7 +198,7 @@ class command_button():
             #print("ValueError while reading touch_pin")
             #print(self.touch_val)
         
-        if (self.touch_val <= 200):
+        if (self.touch_val <= self.threshold_key_command):
             #print("..",self.touchcommand.read())
             return(0)
         return(1)
@@ -214,7 +216,7 @@ class command_button():
             #print("ValueError while reading touch_pin")
             #print(self.touch_val)
         
-        if (self.touch_val1 <= 200):
+        if (self.touch_val1 <= self.threshold_key_command):
             #print("..",self.touchcommand.read())
             return(0)
         return(1)
@@ -307,7 +309,7 @@ class command_button():
                  
              else:
                  
-                 oe.print_big("cq",1)
+                 oe.print_big("cq text...",1)
                           
              
         return(self.button_save_wpm)
@@ -481,26 +483,24 @@ x -> exit Command mode
         self.wpm = 18
         self.wpm_m = 0
         self.cq = 0
-        self.cq_liste =["","cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","uli","cq cq"]
+        #self.cq_liste =["","cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","uli","cq cq"]
+        self.cq_liste =["","","","","","",""]
         
         self.tx_enable = 0
         self.txt_enable = 0
         self.sidetone_enable = 1
         self.sidetone_freq = 700 #
         self.sidetone_volume = 10 # range 1,100 * 200 -> 2000 #30000 laut
+        self.threshold_key = 200 # threshold of the touch key
 #        
-        
-        
-        
-        
-        
         self.request = 0 # request of parameters 
         
 #--------------
         
         self.iambic_data = {} # create date store
         self.read_jsondata()
-        print("....read button....... from json-file")
+        self.init_iambic_data()
+        print("..read button  and from json-file")
         
         self.wpm = self.iambic_data["wpm"]
         cw_time.set_wpm(self.wpm)
@@ -528,6 +528,7 @@ x -> exit Command mode
             ujson.dump(self.json_string, outfile)
             
     def read_jsondata(self):
+        print(">> read json")
         with open('json_iambic.json') as json_file:
             self.data = ujson.load(json_file)
 
@@ -545,6 +546,12 @@ x -> exit Command mode
           
         self.set_data("tx_enamble",self.tx_enable)
         self.set_data("txt_emable",self.txt_enable)
+        
+        self.set_data("threshold_key",self.threshold_key)
+        
+        self.set_data("cq_txt_liste",self.cq_liste)
+        
+        
      
         self.write_data2file()
         
@@ -561,12 +568,18 @@ x -> exit Command mode
           
         oe.print_smal("tx_enamble      :" +str(self.tx_enable),0)
         oe.print_smal("txt_emable      :" +str(self.txt_enable),0)
+        
+        oe.print_smal("threshold_key      :" +str(self.threshold_key),0)
+        oe.print_smal("cq_txt_liste     :" +str(self.cq_liste),0)
+        
+    
         oe.print_smal("",0)
      
         
         
     
     def init_iambic_data(self): # is only use at the begin to create new json file
+        print("init read")
         
         self.iambic_mode = self.iambic_data["iambic_mode"]
         self.wpm = self.iambic_data["wpm"]
@@ -578,6 +591,10 @@ x -> exit Command mode
         
         self.tx_enamble = self.iambic_data["tx_enamble"]
         self.txt_emable = self.iambic_data["txt_emable"]
+        
+        self.threshold_key = self.iambic_data["threshold_key"]
+        
+        self.cq_liste = self.iambic_data["cq_txt_liste"]
         
         # set extern Parameter
         cw_time.set_wpm(self.wpm)
@@ -599,7 +616,7 @@ x -> exit Command mode
             #print("ValueError while reading touch_pin")
             #print(self.touch_val)
         
-        if (self.touch_val <= 200):
+        if (self.touch_val <= self.threshold_key):
            return(self.LOW)
         
     
@@ -613,7 +630,7 @@ x -> exit Command mode
             #print("ValueError while reading touch_pin")
             #print(self.touch_val)
         
-        if (self.touch_val <= 200):
+        if (self.touch_val <= self.threshold_key):
            return(self.LOW)
         
     
@@ -739,7 +756,7 @@ x -> exit Command mode
                 else:
                     # cq mode
                     if self.state_key_dah() == self.LOW: # transmit on
-                        if self.cq <= 4:
+                        if self.cq < len(self.cq_liste)-1:
                             self.cq = self.cq+1
                         else:
                             self.cq = 0
