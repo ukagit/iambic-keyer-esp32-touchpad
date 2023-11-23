@@ -62,9 +62,6 @@ It is a minimalist device based on the micropython `code`  installed on esp32 wi
 
 No `pcb` board, simply solder connectors directly on esp32, and/or assemble it in a box
 
-## Features
-* i2csan.py  for HW test of the I2C display 
-* touch_demo for test the touch key
  
 Command
 
@@ -94,17 +91,17 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 
 ## command for send memory text 
 
-* 1. Press WPM button
+1. Press WPM button
 
-* 2. Dash key for the following memory locations (dot is issued as a receipt)
+2. Dash key for the following memory locations (dot is issued as a receipt)
 
-* 3rd point button starts memory text, (!! but adds a point at the end)
+3rd point button starts memory text, (!! but adds a point at the end)
 
-* 4. another point calls up the memory text again
+4. another point calls up the memory text again
 
-* 5. Command key to exit memory text recall mode.
+5. Command key to exit memory text recall mode.
 
-* 6. Calling up the WPM button again: the last used text memory space is made available, a period key calls up this text memory and outputs it. (with a period after)
+6. Calling up the WPM button again: the last used text memory space is made available, a period key calls up this text memory and outputs it. (with a period after)
 
 
 ## Software Installation
