@@ -96,10 +96,11 @@ class ESP32_BLE():
     
 
 print("start")
-ble = ESP32_BLE("ESP32BLE_Test")
-for i in range(1,100):
-    print(i)
-    ble.send(str(i))
-    time.sleep(1)
+ble = ESP32_BLE("ESP32BLE_TestA")
+while 1:
+    for i in range(1,100):
+        print(i)
+        ble.send(str(i))
+        time.sleep(1)
 
 
