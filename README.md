@@ -1,7 +1,61 @@
+# version 0.9
+
+ich den code noch mal deutlich überarbeitet
+das readme werden ich in den nächste tage noch mal nachreichen
+
+tuka dl2dbg
+
+ 
+
+
+----------------------------
+
+
+## setting of different hardware
+
+ble = ESP32_BLE("ESP32BLE_CW")     # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
+#ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+
+oe = OLED_Print() # print with oled display and BLE
+#oe = BLE_Print() # now OLED,  only print and BLE 
+
+
+----------------------------
+
+reports the ESP32's time relative to January 1st 2000
+Simple solution for uptime timer
+When I used utime while Thonny was running
+
+----------------------------
+# "\r\n"
+when ble is on a form time to time print("\r\n") appears
+```
+
+def advertiser(self):
+        name = bytes(self.name, 'UTF-8')
+        adv_data = self.ble.gap_advertise(100, bytearray('\x02\x01\x02', 'utf-8') + bytearray((len(name) + 1, 0x09),'utf-8') + name )
+        self.ble.gap_advertise(100, adv_data)
+
+        print(adv_data)
+        print("\r\n")
+```
+
+background
+Bluetooth Low Energy (BLE) advertising payloads refer to the data that is transmitted by a BLE device during the advertising process. 
+In the context of BLE, advertising is a mechanism by which devices broadcast their presence to other nearby devices. 
+This process allows devices to discover and establish connections with each other.
+The advertising payload is a part of the advertising packet, which is the unit of data transmitted during advertising. 
+The payload contains information that helps other devices understand the characteristics and purpose of the advertising device. 
+The payload typically includes data such as device name, service UUIDs (Universal Unique Identifiers), manufacturer-specific data, and other relevant information.
+
+
 # iambic keyer for es32 with touchPad
 23.11.23 
 READY for new MicroPython v1.21.0 on 2023-10-05; 
 I update of my software, and deleted Bluetooth modules, because they no work with the new v1.21.0 version. I coud not identified the cause :-(
+
+
+
 
 
 IAMBIC keyer in micropython esp32
@@ -69,16 +123,16 @@ Hit the command button and use a morse letter. The definition is copy from kn3g 
 
 * a -> Iambic Mode A
 * b -> Iambic Mode B
-* m -> request Iambic Mode A/B
+* m -> (?) request Iambic Mode A/B
 
 * ? -> request value of ...
 
-* i -> TX_opt enable(on) disable(off)
+* i -> (?) TX_opt enable(on) disable(off)
  
-* o -> Sidetone toggle (on) (off)
+* o -> (?) Sidetone toggle (on) (off)
 
-* f -> adjust sidetone frequency
-* v -> adjust sidetone volume 1-100
+* f -> (?) adjust sidetone frequency
+* v -> (?) adjust sidetone volume 1-100
  
 
 * t -> tune mode, end with command mode

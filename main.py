@@ -40,6 +40,7 @@ from machine import TouchPad
 #from machine import deepsleep
 from time import sleep
 import esp32
+import ubluetooth
 
 
  
@@ -53,28 +54,166 @@ import ujson
 ssid = "your_wifi_ssid"
 pw = "your_wifi_pw"
 
+ssid = "wuka"
+pw = "wirhabenkeinenschwarzenhund"
 
+class ESP32_BLE():
+    def __init__(self, name):
+        # Create internal objects for the onboard LED
+        # blinking when no BLE device is connected
+        # stable ON when connected
+        self.led = Pin(2, Pin.OUT)
+        self.timer1 = Timer(0)
+        
+        self.name = name
+        self.ble = ubluetooth.BLE()
+        self.ble.active(True)
+        self.disconnected()
+        self.ble.irq(self.ble_irq)
+        self.register()
+        self.advertiser()
+
+    def connected(self):
+        global is_ble_connected
+        is_ble_connected = True
+        self.led.value(1)
+        self.timer1.deinit()
+
+    def disconnected(self):
+        global is_ble_connected
+        is_ble_connected = False
+        self.timer1.init(period=100, mode=Timer.PERIODIC, callback=lambda t: self.led.value(not self.led.value()))
+
+    def ble_irq(self, event, data):
+        global ble_msg
+        
+        if event == 1: #_IRQ_CENTRAL_CONNECT:
+                       # A central has connected to this peripheral
+            self.connected()
+            print("connect")
+
+        elif event == 2: #_IRQ_CENTRAL_DISCONNECT:
+                         # A central has disconnected from this peripheral.
+            self.advertiser()
+            self.disconnected()
+            print("disconnectec")
+        
+        elif event == 3: #_IRQ_GATTS_WRITE:
+                         # A client has written to this characteristic or descriptor.          
+            buffer = self.ble.gatts_read(self.rx)
+            ble_msg = buffer.decode('UTF-8').strip()
+            print("read")
+            print(ble_msg)
+            
+    def register(self):        
+        # Nordic UART Service (NUS)
+        NUS_UUID = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E'
+        RX_UUID = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'
+        TX_UUID = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'
+            
+        BLE_NUS = ubluetooth.UUID(NUS_UUID)
+        BLE_RX = (ubluetooth.UUID(RX_UUID), ubluetooth.FLAG_WRITE)
+        BLE_TX = (ubluetooth.UUID(TX_UUID), ubluetooth.FLAG_NOTIFY)
+            
+        BLE_UART = (BLE_NUS, (BLE_TX, BLE_RX,))
+        SERVICES = (BLE_UART, )
+        ((self.tx, self.rx,), ) = self.ble.gatts_register_services(SERVICES)
+
+    def send(self, data):
+        if is_ble_connected:
+            self.ble.gatts_notify(0, self.tx, data + '\n')
+
+    def advertiser(self):
+        name = bytes(self.name, 'UTF-8')
+        adv_data = self.ble.gap_advertise(100, bytearray('\x02\x01\x02', 'utf-8') + bytearray((len(name) + 1, 0x09),'utf-8') + name )
+        self.ble.gap_advertise(100, adv_data)
+
+        print(adv_data)
+        print("\r\n")
+                # adv_data
+                # raw: 0x02010209094553503332424C45
+                # b'\x02\x01\x02\t\tESP32BLE'
+                #
+                # 0x02 - General discoverable mode
+                # 0x01 - AD Type = 0x01
+                # 0x02 - value = 0x02
+                
+                # https://jimmywongiot.com/2019/08/13/advertising-payload-format-on-ble/
+                # https://docs.silabs.com/bluetooth/latest/general/adv-and-scanning/bluetooth-adv-data-basics
+                
+
+
+class ESP32_BLE_pass():
+    def __init__(self, name):
+        pass
+
+    def send(self, data):
+        pass
+    
+
+                
 
 class OLED_Print():
+    def __init__(self):
+        
+        i2c = machine.I2C(1, scl = machine.Pin(18), sda = machine.Pin(19), freq = 400000)  #esp32
+
+        oled_width = 128
+        oled_height = 32
+        self.oled = ssd1306.SSD1306_I2C(oled_width, oled_height, i2c)
+        self.oled.rotate(0)
+
+ 
+
     def print_smal(self,data,inv):
+        if inv != 0 :
+            print(f'\033[31m')  # print invers "red"
         print(data)
-        oled.fill(0)
-        oled.invert(inv)
-        oled.text(data, 0, 0)
-        oled.show()
+        ble.send(data)
+        self.oled.fill(0)
+        self.oled.invert(inv)
+        self.oled.text(data, 0, 0)
+        self.oled.show()
+        if inv != 0 :
+            print(f'\033[0m')
         
     def print_big(self,data,inv):
-        oled.fill(0)
+        if inv != 0 :
+            print(f'\033[31m')
+        print(data)
+        ble.send(data)
+        self.oled.fill(0)
+        self.oled.invert(inv)
         #oled.text("test",5,5)
-        font_writer = writer.Writer(oled, freesans20,False)
+        font_writer = writer.Writer(self.oled, freesans20,False)
         font_writer.set_textpos(5,20)
         font_writer.printstring(data)
-        oled.show()
+        self.oled.show()
+        if inv != 0 :
+            print(f'\033[0m')
+        
+class BLE_Print():
+    def print_smal(self,data,inv):
+        if inv != 0 :
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        ble.send(data)
+        if inv != 0 :
+            print(f'\033[0m')
+        
+        
+    def print_big(self,data,inv):
+        if inv != 0 :
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        ble.send(data)
+        if inv != 0 :
+            print(f'\033[0m')
+        
     
-oe = OLED_Print()
+#
 
 
-    
 
 #xiaoKey - a computer connected iambic keyer
 # Copyright 2022 Mark Woodworth (AC9YW)
@@ -179,13 +318,14 @@ class command_button():
         self.led2   =  Pin(led2, Pin.OUT)
         
         self.button_save = 0
-        self.button_save_wpm = 1
+        self.button_short_command_save = 1
         self.btimer = 0 # timer for debounce
         self.comannd_state = 1 # im keyer mode
-        self.comannd_state_wpm = 0 # im keyer mode
-        self.comannd_state_wpm_cq = 0 # im keyer mode
+     
+    
         self.threshold_key_command = 201 # hard codet not im json file 
         
+        self.state = 0 
         
         self.touchcommand=TouchPad(Pin(tcommand))
         self.touchwpm=TouchPad(Pin(twpm))
@@ -212,7 +352,7 @@ class command_button():
         return(1)
        #return(self.dit_key.value())
     
-    def state_key_wpm(self):
+    def state_key_short_command(self):
         #print("..",self.touchwpm.read())
         #sleep(0.5)
         try:
@@ -236,16 +376,27 @@ class command_button():
         return(self.state_key_command())
     
     def button_command_off(self):
+        
          
-        print("command off")
+
+        # command and short command zurüchstezen auf 0
         self.comannd_state =  0
+        self.short_c_state =  0 #short comannd state
+        
         self.led1(self.comannd_state)
         self.led2(self.comannd_state)
-        oe.print_smal("command:off",self.comannd_state)
-        iambic.write_jsondata() # save parameter afer change
-        iambic.char = ""
+        
+        iambic.char = "" # variablem zurücksetzen
         iambic.word = ""
-        #text2cw("e")
+        
+        self.transmit_tune= 0       # dem tunemode sauber ausschalten      
+        cw(0)
+        txopt.off()
+        
+        
+        oe.print_smal("Command:"+str(self.comannd_state),self.comannd_state)
+        beep(".")
+     
              
         
     def button_state(self):
@@ -263,65 +414,70 @@ class command_button():
              
              self.comannd_state =  not self.comannd_state
              oe.print_smal("Command:"+str(self.comannd_state),self.comannd_state)
+             beep(".")
+            
+             
+             
              
              if not self.comannd_state:
                  self.button_command_off()
-                 self.comannd_state_wpm =  0
-             
-                 
-                
              
              if self.comannd_state:
-                     # in command mode immer ton on 
-                     cwt.set2cton()
+                     # in command mode immer ton on
+                     
+                     cwt.set2cton() # set command tone
                      cwt.onoff(True)
+                     txopt.off()
              else :
-                     cwt.set2ton()
+                     cwt.set2ton() # set side tone
                      cwt.onoff(iambic.sidetone_enable)
+                     txopt.on()
+                     print("tx_en:",iambic.tx_enable)
+                    # if iambic.tx_enable:
+                    #                txopt.on()
+                     
                      
             
-             #text2cw("e") #keine Peep am ende :-)
+         
              
         return(self.button_save)
             
     
-    def button_state_wpm(self):
+   
+   
         
+    def button_state_short_command(self): #24.11.23 new code 
+        max_sate = 2 # in use (0,1,2)
+        
+        # 1/0 wechsel der Taste abfragebń
+        if self.state_key_short_command() == 0 and self.button_short_command_save == 1: # 1 0 ->button is press
+            self.button_short_command_save = 0
             
-        if self.state_key_wpm() == 0 and self.button_save_wpm == 1: # 1 0 ->button is press
-            #utime.ticks_ms()
-            #self.btimer  = utime.ticks_ms()
-            self.button_save_wpm = 0
+        elif self.state_key_short_command() == 1 and self.button_short_command_save == 0 : #0 0 ->button IS press
+            self.button_short_command_save = 1
             print("WPM press 0")
+
+            # taste wurde gedrückt abhängig vom state aktion veranlassen
             
-        elif self.state_key_wpm() == 1 and self.button_save_wpm == 0 : #0 0 ->button IS press
-            
-             self.button_save_wpm = 1
-             print("WPM press 1")
-             self.comannd_state_wpm_cq  = not self.comannd_state_wpm_cq  # toggle zwischen wpm and cq call
-             
-             print("WPM_CW",self.comannd_state_wpm_cq)
-             
-             self.led2(not self.comannd_state)
-             
-             #self.comannd_state_wpm =  not self.comannd_state_wpm
-             self.comannd_state_wpm =  1 
-             #self.comannd_state =  1
-            
-             if self.comannd_state_wpm_cq :
-                 
-                 cw_time.set_wpm(iambic.wpm)
-                 oe.print_smal("Command_mode_wpm:"+str(self.comannd_state_wpm),1)
-                 oe.print_big("WPM:  "+str(iambic.wpm),1)
-                 cb.comannd_state = 1
-                 
-             else:
-                 
-                 oe.print_big("cq text...",1)
-                          
-             
-        return(self.button_save_wpm)
-            
+            if self.short_c_state == max_sate :
+                self.short_c_state = 0
+            self.short_c_state += 1   
+      
+            if self.short_c_state == 1:
+                oe.print_big("cq text...",1)
+                cb.comannd_state = 1
+           
+            elif self.short_c_state == 2:
+                cw_time.set_wpm(iambic.wpm)
+                oe.print_big("WPM:  "+str(iambic.wpm),1)
+                cb.comannd_state = 1
+                
+            elif self.short_c_state == 3:
+                oe.print_big("state 3",1)
+            elif self.short_c_state == 3:
+                oe.print_big("state 3",1)
+                
+
         
 class watch_ideal():
     '''
@@ -353,10 +509,12 @@ class cw_sound():
         self.pwm_ton = PWM(Pin(pin))
         #eine Frequenz von 1000hz also 1kHz
         self.freq = 600
-        self.Ton_freq_command = 1500
+        self.Ton_freq_command = 1000
         self.pwm_ton.freq(self.freq)
         self.cwvolum = 300  #30000 laut
         self.on_off = 1
+        
+        self.tone(0) # init now sound
      
 
     def set_tonfreq(self,freq):
@@ -388,14 +546,25 @@ class cw_sound():
             else:
                 self.pwm_ton.duty_u16(1)
                 
+    def tonec(self,on): #command
+        
+            if on:
+                self.pwm_ton.duty_u16(self.cwvolum)
+            else:
+                self.pwm_ton.duty_u16(1)
+                
     def onoff(self,state):
         self.on_off = state
     
 
 def cw(state):
-    cwt.tone(state)
+    cwt.tone(state) # Beep and TX 
   
     txopt.send(state)
+
+def cw_beep(state): # only Beep
+    cwt.tonec(state)
+  
     
     
 class cw_timing():
@@ -656,11 +825,16 @@ x -> exit Command mode
             self.keyerControl |= self.DIT_L
         if (self.state_key_dah() == self.LOW):
             self.keyerControl |= self.DAH_L
-        
+    
+    def print_request(self, txt):
+        oe.print_big(txt,cb.comannd_state)
+        text2beep(txt)
+        self.char = ""
+    
     def cycle(self):
         #utime.sleep(0.3)
         cb.button_state() ## Comand button abfragen
-        cb.button_state_wpm() ## Comand button WPM  abfragen
+        cb.button_state_short_command() ## Comand button WPM  abfragen
         
         # clear display when ideal 
         if w_ideal.diff() >= 3 and cb.comannd_state == 0:
@@ -678,38 +852,39 @@ x -> exit Command mode
                 
                 if self.state_key_dah() == self.LOW: # transmit on
                     self.transmit_tune= 1
-                    
+                    txopt.on()
                     cw(1)
                 elif self.state_key_dit() == self.LOW: #transmit off
                     self.transmit_tune= 0
                     
                     cw(0)
+                    txopt.off()
                 return
                 
                 
                 
-            elif self.adj_sidetone == 1: # begin tune
+            elif self.adj_sidetone == 1: # begin tune of sidetone
         
                 self.keyerSate = self.IDLE
                 
                 if self.state_key_dah() == self.LOW: # transmit on
-                    if self.sidetone_freq > 2000:
-                        text2cw("max")
+                    if self.sidetone_freq > 1500:
+                        text2beep("max")
                     else:
                         self.sidetone_freq =self.sidetone_freq +10
                         cwt.set_tonfreq(self.sidetone_freq) # change the Freq
                         oe.print_smal("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
+                        beep("-")
                         
-                        play("-")
                 elif self.state_key_dit() == self.LOW: #transmit off
-                    if self.sidetone_freq < 50:
-                        text2cw("min")
+                    if self.sidetone_freq < 200:
+                        text2beep("min")
                     else:
                         self.sidetone_freq = self.sidetone_freq -10
                         cwt.set_tonfreq(self.sidetone_freq)
                         oe.print_smal("sidetone_freq:"+str(self.sidetone_freq),cb.comannd_state)
                         
-                        play(".")
+                        beep(".")
                 return
              
             
@@ -720,48 +895,50 @@ x -> exit Command mode
                 #tx.on()
                 
                 if self.state_key_dah() == self.LOW: # transmit on
-                    if self.sidetone_volume >= 100:
-                        text2cw("max")
+                    if self.sidetone_volume >= 30:
+                        text2beep("max")
                     else:
                         self.sidetone_volume = self.sidetone_volume + 1
                         cwt.volume(self.sidetone_volume*200)
                         oe.print_smal("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
                         #print(self.sidetone_volume)
-                        play("-")
+                        beep("-")
                         
                 elif self.state_key_dit() == self.LOW: #transmit off
                     if self.sidetone_volume <= 0:
-                        text2cw("min")
+                        text2beep("min")
                     else:
                         self.sidetone_volume = self.sidetone_volume - 1
                         cwt.volume(self.sidetone_volume*200)
                         oe.print_smal("sidetone:"+str(self.sidetone_volume*200),cb.comannd_state)
                         #print(self.sidetone_volume)
-                        play(".")
+                        beep(".")
                 return
             
-            elif self.adj_wpm == 1 or cb.comannd_state_wpm == 1 : # begin tune
+            elif self.adj_wpm == 1 or cb.short_c_state == 1 or cb.short_c_state == 2 : # begin tune
         
                 self.keyerSate = self.IDLE
                 
-                if cb.comannd_state_wpm == 1 : txopt.off()
                 
-                if cb.comannd_state_wpm_cq :
+                if cb.short_c_state == 2 or self.adj_wpm == 1: # wpm adjust
+                    txopt.off()
                 # wpm mode    
                 
                     if self.state_key_dah() == self.LOW: # transmit on
                         self.wpm = self.wpm+1
                         cw_time.set_wpm(self.wpm)
                         oe.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
-                        play(".")
+                        beep(".")
                         
                     elif self.state_key_dit() == self.LOW: #transmit off
                         if self.wpm >= 10:
                             self.wpm = self.wpm-1
                         cw_time.set_wpm(self.wpm)
                         oe.print_big("WPM:  "+str(self.wpm),cb.comannd_state)
-                        play(".")
-                else:
+                        beep(".")
+                        
+                elif cb.short_c_state == 1: # send memory text
+                    txopt.off()
                     # cq mode
                     if self.state_key_dah() == self.LOW: # transmit on
                         if self.cq < len(self.cq_liste)-1:
@@ -770,21 +947,19 @@ x -> exit Command mode
                             self.cq = 0
                         
                         oe.print_smal(""+ self.cq_liste[self.cq],cb.comannd_state)
-                        play(".")
+                        beep(".")
                         
                     elif self.state_key_dit() == self.LOW: #transmit off
                         txopt.on()
                         text2cw(self.cq_liste[self.cq])
                         txopt.off()
-                        play(".")
+                        beep(".")
                        
                     
                         
                 txopt.on()
                 return
-            
-            
-                
+                    
                 
                 
         else: # wenn  commad mode ende dann auch tune :-)
@@ -836,17 +1011,18 @@ x -> exit Command mode
                             if self.request == 1:
                                 
                                 if self.tx_enable :
-                                    text2cw("on")
+                                    text2beep("on")
                                 else:
-                                    text2cw("off")
+                                    text2beep("off")
+                                self.char = ""
                             else:    
                                 self.tx_enable = not self.tx_enable
                                 if self.tx_enable:
                                     txopt.on()
                                     oe.print_smal("tx_enable:on",cb.comannd_state)
-                                    text2cw("on")
+                                    text2beep("on")
                                 else:
-                                    text2cw("off")
+                                    text2beep("off")
                                     oe.print_smal("tx_enable:off",cb.comannd_state)
                                     txopt.off()
                                 #print("Transmit", self.tx_enable)
@@ -858,29 +1034,30 @@ x -> exit Command mode
                             oe.print_smal("o sidetone on/off",cb.comannd_state)
                             if self.request == 1:
                                 if self.sidetone_enable :
-                                    text2cw("on")
+                                    self.print_request("on") 
                                 else:
-                                    text2cw("off")
-                                    
+                                     self.print_request("off")
+                                cb.button_command_off()
                                 
                             else:
                                 self.sidetone_enable = not self.sidetone_enable
                                 if self.sidetone_enable:
                                     cwt.onoff(1)
                                     oe.print_smal("sideton_enable:on",cb.comannd_state)
-                                    text2cw("on")
+                                    text2beep("on")
                                 else:
-                                    text2cw("off")
+                                    text2beep("off")
                                     cwt.onoff(0)
                                     oe.print_smal("sideton_enable:off",cb.comannd_state)
                                     cb.button_command_off()
                                 print("sidetone", self.tx_enable)
+                                cb.button_command_off()
                                 
                         elif  Char == "t" : # tune mode
                             oe.print_smal("T tune mode",cb.comannd_state)
                             self.tune = 1
                             if self.tune:
-                                text2cw("on")
+                                text2beep("on")
                         # Get current time in UTC
                         elif  Char == "c" : # clock mode
 
@@ -894,7 +1071,10 @@ x -> exit Command mode
                                 
                             )
                             oe.print_big(formatted_time,cb.comannd_state)
-                            sleep(2)
+                            text2beep("time")
+                            #text2beep(formatted_time) 
+                            cb.button_command_off()
+                            
                         elif  Char == "d" : # day mode
                             
                             current_time = utime.gmtime()
@@ -906,41 +1086,55 @@ x -> exit Command mode
                                 current_time[0]   # year
                             )
                             oe.print_big(formatted_time,cb.comannd_state)
-                            sleep(2)
+                            text2beep("time")
+                            #text2beep(formatted_time)
+                            cb.button_command_off()
 
-                                
-                        
                                     
                         elif  Char == "v" : # sidetone volume controll
                             oe.print_smal("v sidetone volume",cb.comannd_state)
                             if self.request == 1:
-                                text2cw(str(self.sidetone_volume))
+                                self.print_request(str(self.sidetone_volume*200))
                                 
                             else:
                                 self.adj_sidetone_volume = 1
                             
                         elif  Char == "?" : # request of parameters
-                            oe.print_smal("? tx request of parameters",cb.comannd_state)
+                            oe.print_smal("? request of parameters",cb.comannd_state)
+                            sleep(1)
                             self.request = 1
+                            self.char = ""
                             
-                        elif  Char == "/" : # command exit
-                                oe.print_smal("/ command exit",cb.comannd_state)
-                                
-                                self.print_parameter()
-                                cwt.set2ton()
-                                cb.button_command_off()
+                        elif  Char == "/" :
+                            oe.print_smal("/ command exit",cb.comannd_state)
+                            self.print_parameter()
+                            cwt.set2ton()
+                            cb.button_command_off()
                             
                             
                         elif  Char == "x" : # command exit
                                 
-                                cwt.set2ton()
-                                cb.button_command_off()
+                            cwt.set2ton()
+                            cb.button_command_off()
+                                
+                        elif  Char == "w" :
+                            if self.request == 1:
+                                self.print_request(str(self.wpm))
+                                
+                            else:
+                                self.adj_wpm = 1
+                            
+                                
+                                
+                                
                                 
                                 
                         elif  Char == "f" : # adjust sidetone frequenz
                             oe.print_smal("f adjust sidetone",cb.comannd_state)
                             if self.request == 1:
-                                text2cw(str(self.sidetone_freq))
+                                 
+                                self.print_request(str(self.sidetone_freq))
+                                 
                             else:
                                 self.adj_sidetone = 1
                         
@@ -948,25 +1142,34 @@ x -> exit Command mode
                         
                         elif  Char == "m" : # Iambic mode a/b
                             if self.request == 1:
-                                if self.iambic_mode== 16 : text2cw("b")
-                                else : text2cw("a")
+                                if self.iambic_mode== 16 :
+                                    self.print_request("B")
+                                else :
+                                    self.print_request("A")
+                            cb.button_command_off()
+                                
+                                 
                             
                         elif  Char == "a" : # 
                                 oe.print_smal("a set iambic a",cb.comannd_state)
+                                text2beep("a")
                                 self.iambic_mode  = 0 #  0x10     # 0 for Iambic A, 1 for Iambic B
                                 cb.button_command_off()
                                 
                                 self.write_jsondata() # save parameter afer change
+                                 
+                                
                                 
                         elif  Char == "s" : #  save parameter to  file
                                 oe.print_smal("s save parameter",cb.comannd_state)
                                 self.write_jsondata() # save parameter afer change
-                                text2cw("save")
+                                text2beep("save")
                                 cb.button_command_off()
                         
                                 
                         elif  Char == "b" : # adjust sidetone frequenz
                                 oe.print_smal("b set iambic b",cb.comannd_state)
+                                text2beep("b")
                                 self.iambic_mode  = 0x10 #  0x10     # 0 for Iambic A, 1 for Iambic B
                                 cb.button_command_off()
                         else :
@@ -1074,6 +1277,25 @@ def play(pattern):
         elif sound == ' ':
             utime.sleep(4*cw_time.dit_time()/1000)
     utime.sleep(2*cw_time.dit_time()/1000)
+    
+def beep(pattern): # online Tone
+    #print("play")
+    for sound in pattern:
+        if sound == '.':
+            cw_beep(True)
+            #print(uutime.ticks_ms()())
+            utime.sleep(cw_time.dit_time()/1000)
+            #print(uutime.ticks_ms())
+            cw_beep(False)
+            utime.sleep(cw_time.dit_time()/1000)
+        elif sound == '-':
+            cw_beep(True)
+            utime.sleep(3*cw_time.dit_time()/1000)
+            cw_beep(False)
+            utime.sleep(cw_time.dit_time()/1000)
+        elif sound == ' ':
+            utime.sleep(4*cw_time.dit_time()/1000)
+    utime.sleep(2*cw_time.dit_time()/1000)
 
 def text2cw(str):
     for c in str:
@@ -1083,12 +1305,21 @@ def text2cw(str):
             return
         else:
             play(encode(c))
+            
+def text2beep(str):
+    for c in str:
+        #print(".")
+        if cb.button_press() == 0 :
+            print("break")
+            return
+        else:
+            beep(encode(c))
+         
          
 #----------------------------------------
 
 # Setup Hardware pin on esp32
 
- 
 onboard_led      = 2 
 extern_led_pin   = 23 
 tx_opt_pin       = 4 
@@ -1100,77 +1331,25 @@ touchPad_dah_pin = 33
 touchPad_command_pin  = 27
 touchPad_wpm_pin      = 14
  
-#----------------------------------------
 
-i2c = machine.I2C(1, scl = machine.Pin(18), sda = machine.Pin(19), freq = 400000)  #esp32
-
-oled_width = 128
-oled_height = 32
-oled = ssd1306.SSD1306_I2C(oled_width, oled_height, i2c)
-oled.rotate(0)
+# hier WIFI reinkopieren
 
 
-oled.text('start', 0, 0)
-oled.show()
-
-
-# connect to wifi
-print("Connecting to WiFi...")
-oled.text('wifi not Connected', 0, 9)
-oled.show()
-wifi = network.WLAN(network.STA_IF)
-wifi.active(True)
-
-
-try:
-    # WLAN-Verbindung herstellen
-    wifi.active(True)
-    wifi.connect(ssid, pw)
-
-    # Warten, bis die Verbindung hergestellt ist
-    while not wifi.isconnected():
-        pass
-
-    # WLAN-Verbindung hergestellt
-    print("Verbunden mit WLAN:", ssid)
-
-except Exception as e:
-    # Fehler beim Verbinden mit dem WLAN
-    oled.text('wifi not Connected', 0, 9)
-    oled.show()
-    sleep(1)
-    print("Fehler beim Verbinden mit WLAN:", e)
-    
-
-
-if wifi.isconnected():
-    print(" Connected.")
-    
-    
-    oled.text('wifi Connected', 0, 9)
-    oled.text(wifi.ifconfig()[0], 0,24 )
-    oled.show()
-    sleep(1)
-
-    try:
-        # update system time from NTP server
-        ntptime.settime()
-        print("NTP server query successful.")
-        print("System time updated:", utime.localtime())
-        update_time = utime.ticks_ms()
-        
-                
-    except:
-        print("NTP server query failed.")
 
 #paddle instance
 print("keyer")
 
+# setting different hardware
+
+ble = ESP32_BLE("ESP32BLE_CW")     # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
+#ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+
+oe = OLED_Print() # print with oled display and BLE
+#oe = BLE_Print() # now OLED,  only print and BLE 
 
 # user class
 
 w_ideal = watch_ideal()
-
 
  
 txopt   = tx_opt(tx_opt_pin)
@@ -1178,15 +1357,15 @@ cwt = cw_sound(cw_sound_pin)
 
 cw_time = cw_timing(18) # classe "cwtiming" are use, def wpm18 or defition from json  file
 
-
-
 cb      = command_button(touchPad_command_pin,touchPad_wpm_pin,onboard_led,extern_led_pin)
 iambic  = Iambic(touchPad_dit_pin,touchPad_dah_pin)
 
-text2cw("r") #ready
+
+oe.print_big("Keyer ready",0)
+sleep(1)
+text2beep("r") #ready
 
 #-------- 
 while True:
       iambic.cycle()
-    #text2cw("v")
     
