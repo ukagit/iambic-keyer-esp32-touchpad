@@ -1,3 +1,4 @@
+# 28.11.23 version 0.95  
 # 23.11.23 self.cq_liste and threshold_key in json file include
 # 21.11.23 ready for new version MicroPython v1.21.0 on 2023-10-05
 # bluetooth module gelöscht, lief mit der neuen version MicroPython v1.21.0 on 2023-10-05; fehler nicht gefunden??
