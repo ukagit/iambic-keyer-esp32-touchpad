@@ -33,12 +33,16 @@ Pressing the Command button switches to Command mode; pressing it again returns 
 
 # USE
 ## operate and command mode
+
 ### operate 
 You can send MORSE code with the **DIT** **DAT** paddel.
 
 ### command
 Hit the command button and use a morse letter 
 
+### keyer sound
+The command and operation mode are signaled by two different tone frequencies command and sidetone.
+The sidetone can be turned off and on.
 
 ### The procedure for the Command mode is as follows:
 
@@ -202,7 +206,7 @@ all Buttons are touch.
 
 ![schematic](./keyer1.jpg)
 
-## different hardware setup 
+## Different hardware setup 
 #### option
 * OLED 
 * BLE 
@@ -210,38 +214,18 @@ all Buttons are touch.
 In the code are different class difintion. One is "aktive" the ather other is "dummy".  
 You can enable or disable the class by simple comment out.
 
+## OE Class selction
+1. print only on console
+1. print on console and oled display
+2. print on console, OLED Display and BLE
 ```
 ble = ESP32_BLE("ESP32BLE_CW")     # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
 #ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
-oe = OLED_Print() # print with oled display and BLE
-#oe = BLE_Print() # now OLED,  only print and BLE 
+oe = CONSOLE_Print() # print only console
+#oe = OLED_Print()   # print with oled display and BLE
+#oe = BLE_Print()    # now OLED,  only print and BLE 
 ```
-
-
-## known issue
-### output new line 
-When BLE is on, form time to time a print("\r\n") appears,
-cause is advertiser time out.
-
-```
-def advertiser(self):
-        name = bytes(self.name, 'UTF-8')
-        adv_data = self.ble.gap_advertise(100, bytearray('\x02\x01\x02', 'utf-8') + bytearray((len(name) + 1, 0x09),'utf-8') + name )
-        self.ble.gap_advertise(100, adv_data)
-
-        print(adv_data)
-        print("\r\n")
-```
-
-#### background
-Bluetooth Low Energy (BLE) advertising payloads refer to the data that is transmitted by a BLE device during the advertising process. 
-In the context of BLE, advertising is a mechanism by which devices broadcast their presence to other nearby devices. 
-This process allows devices to discover and establish connections with each other.
-The advertising payload is a part of the advertising packet, which is the unit of data transmitted during advertising. 
-The payload contains information that helps other devices understand the characteristics and purpose of the advertising device. 
-The payload typically includes data such as device name, service UUIDs (Universal Unique Identifiers), manufacturer-specific data, and other relevant information.
-
 
 
 ## Bluetooth pairing 
@@ -265,6 +249,15 @@ The command output can be different.
 uptime, reports the ESP32's time relative to January 1st 2000.  
 Correct time because the system time was given by thonny when starting.
 
+### Power consumption of ESP32
+The power consumption of an ESP32 microcontroller can vary significantly depending on various factors such as connected peripheral devices, the activity of the microcontroller, and the implemented power-saving measures. Here are some general guidelines.
+
+#### Active mode without BLE: 
+In active mode without BLE, the power consumption of the ESP32 can range from about 40 mA to several hundred mA, depending on the specific configuration and activities.
+#### Active mode with BLE: 
+When BLE is enabled, power consumption usually increases. The exact consumption depends on the BLE configuration and transmission activity. A typical estimate could range from 60 mA to 100 mA.
+
+
 ## Addone software
 It's still tests and utility programs in the GitHub.
 * i2csan.py  for HW test of the I2C display 
@@ -280,5 +273,7 @@ Use this to adjust the threshold value.
 
 ---
 ### Version
-READY for new MicroPython v1.21.0 on 2023-10-05; 
+READY for new MicroPython v1.21.0 on 2023-10-05;
+
+
 

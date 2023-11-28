@@ -122,7 +122,7 @@ class ESP32_BLE():
 
     def send(self, data):
         if is_ble_connected:
-            self.ble.gatts_notify(0, self.tx, data + '\n')
+            self.ble.gatts_notify(0, self.tx, data + '\n')  
 
     def advertiser(self):
         name = bytes(self.name, 'UTF-8')
@@ -130,7 +130,7 @@ class ESP32_BLE():
         self.ble.gap_advertise(100, adv_data)
 
         print(adv_data)
-        print("\r\n")
+        print("\r\n")  
                 # adv_data
                 # raw: 0x02010209094553503332424C45
                 # b'\x02\x01\x02\t\tESP32BLE'
@@ -153,7 +153,28 @@ class ESP32_BLE_pass():
     
 
                 
+##################################################
+class CONSOLE_Print():
+#only pint on console     
 
+
+    def print_smal(self,data,inv):
+        if inv != 0 :
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        if inv != 0 :
+            print(f'\033[0m')
+        
+    def print_big(self,data,inv):
+        if inv != 0 :
+            print(f'\033[31m')
+        print(data)
+        if inv != 0 :
+            print(f'\033[0m')
+    def print_dark(self): # dark display 
+        pass
+            
+##################################################
 class OLED_Print():
     def __init__(self):
         
@@ -177,6 +198,11 @@ class OLED_Print():
         self.oled.show()
         if inv != 0 :
             print(f'\033[0m')
+            
+    def print_dark(self): # dark display 
+        self.oled.fill(0)
+        self.oled.show()
+        
         
     def print_big(self,data,inv):
         if inv != 0 :
@@ -192,7 +218,7 @@ class OLED_Print():
         self.oled.show()
         if inv != 0 :
             print(f'\033[0m')
-        
+##################################################        
 class BLE_Print():
     def print_smal(self,data,inv):
         if inv != 0 :
@@ -210,6 +236,10 @@ class BLE_Print():
         ble.send(data)
         if inv != 0 :
             print(f'\033[0m')
+            
+    def print_dark(self): # dark display 
+        self.oled.fill(0)
+        self.oled.show()
         
     
 #
@@ -335,45 +365,40 @@ class command_button():
 #         self.ton_freq_command = cwt.tonfreq_command()
         
     def state_key_command(self):
-        #print("..",self.touchcommand.read())
-        #print("..",self.touchwpm.read())
-        #sleep(0.5)
+        
         try:
             self.touch_val = self.touchcommand.read()
         # ggf. Fehler abfangen
         except ValueError:
-            #print("..",self.touchcommand.read())
+            
             return(1)
-            #print("ValueError while reading touch_pin")
-            #print(self.touch_val)
+             
         
         if (self.touch_val <= self.threshold_key_command):
-            #print("..",self.touchcommand.read())
+           
             return(0)
         return(1)
-       #return(self.dit_key.value())
+      
     
     def state_key_short_command(self):
-        #print("..",self.touchwpm.read())
-        #sleep(0.5)
+       
         try:
             self.touch_val1 = self.touchwpm.read()
-        # ggf. Fehler abfangen
+        
         except ValueError:
-            #print("..",self.touchcommand.read())
+            
             return(1)
-            #print("ValueError while reading touch_pin")
-            #print(self.touch_val)
+            
         
         if (self.touch_val1 <= self.threshold_key_command):
-            #print("..",self.touchcommand.read())
+           
             return(0)
         return(1)
-       #return(self.dit_key.value())
+      
     
         
     def button_press(self):
-        #print("command key: ",self.state_key_command())
+         
         return(self.state_key_command())
     
     def button_command_off(self):
@@ -394,11 +419,7 @@ class command_button():
         cw(0)
         txopt.off()
         
-        
-        oe.print_smal("Command:"+str(self.comannd_state),self.comannd_state)
-        beep(".")
      
-             
         
     def button_state(self):
         
@@ -543,6 +564,7 @@ class cw_sound():
     def tone(self,on):
         if self.on_off == 1:
             if on:
+                self.set2ton()
                 self.pwm_ton.duty_u16(self.cwvolum)
             else:
                 self.pwm_ton.duty_u16(1)
@@ -550,6 +572,7 @@ class cw_sound():
     def tonec(self,on): #command
         
             if on:
+                self.set2cton()
                 self.pwm_ton.duty_u16(self.cwvolum)
             else:
                 self.pwm_ton.duty_u16(1)
@@ -734,8 +757,7 @@ x -> exit Command mode
         self.write_data2file()
         
     def print_parameter(self): # write new json file
-        #print("write_jsondata")
-        
+       
         oe.print_smal("---Paramter",0)
         oe.print_smal("iambic_mode     :" + str(self.iambic_mode),0) # transmit
         oe.print_smal("wpm             :" +str(self.wpm),0)
@@ -791,8 +813,7 @@ x -> exit Command mode
         # ggf. Fehler abfangen
         except ValueError:
             return(self.HIGH)
-            #print("ValueError while reading touch_pin")
-            #print(self.touch_val)
+           
         
         if (self.touch_val <= self.threshold_key):
            return(self.LOW)
@@ -805,8 +826,7 @@ x -> exit Command mode
         # ggf. Fehler abfangen
         except ValueError:
             return(self.HIGH)
-            #print("ValueError while reading touch_pin")
-            #print(self.touch_val)
+           
         
         if (self.touch_val <= self.threshold_key):
            return(self.LOW)
@@ -839,7 +859,7 @@ x -> exit Command mode
         
         # clear display when ideal 
         if w_ideal.diff() >= 3 and cb.comannd_state == 0:
-            oe.print_big("",0)
+            oe.print_dark()
             w_ideal.update()
             
         
@@ -954,7 +974,7 @@ x -> exit Command mode
                         txopt.on()
                         text2cw(self.cq_liste[self.cq])
                         txopt.off()
-                        beep(".")
+                        
                        
                     
                         
@@ -984,10 +1004,10 @@ x -> exit Command mode
             if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time()*4.5):
                 if self.in_word:
                     self.in_word = False
-                    #print(utime.ticks_ms(),self.ktimer_end)
-                    #print(self.word)
+                   
                     oe.print_smal(self.word,0)
                     self.word = ""
+                   
             
             if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time()*1.5):
                 
@@ -995,8 +1015,7 @@ x -> exit Command mode
                 
                 if self.in_char:
                     self.in_char = False
-                    #print(utime.ticks_ms(),self.ktimer_end)
-                    #print("char",self.char)
+                   
                     self.deep_sleep = False
                     self.deep_sleep_timer = utime.ticks_ms() #timmer aktualisieren
                     self.word = self.word+decode(self.char)
@@ -1026,7 +1045,7 @@ x -> exit Command mode
                                     text2beep("off")
                                     oe.print_smal("tx_enable:off",cb.comannd_state)
                                     txopt.off()
-                                #print("Transmit", self.tx_enable)
+                              
                                 cb.button_command_off()
                                 
                         
@@ -1177,16 +1196,9 @@ x -> exit Command mode
                             self.char = "" 
                              
                     else :
-                        #print(decode(self.char))
-                        #es wird bei word gezeigt
-                        #es wird nur das word ausgeben keine char.
-                        #if is_ble_connected:
-                           # ble.send(decode(self.char))
-                    
+                        
                         self.char = ""
                         
-#                 #send(decode(self.char))
-#                 self.char = ""
            
             if ((self.state_key_dit() == self.LOW) or (self.state_key_dah() == self.LOW) or (self.keyerControl & 0x03)):
                 self.update_PaddleLatch()
@@ -1221,9 +1233,7 @@ x -> exit Command mode
                 self.keyerState = self.IDLE;
   
         elif self.keyerState == self.KEYED_PREP:
-            #print("Prep")
-            #Assert key down, start timing, state shared for dit or dah
-            #digitalWrite(ledPin, HIGH);         // turn the LED on
+             
             self.Key_state = self.HIGH
             cw(True)
             
@@ -1251,7 +1261,7 @@ x -> exit Command mode
                 if (self.keyerControl & self.DIT_PROC): # was it a dir or dah?
                     self.keyerControl &= ~(self.DIT_L + self.DIT_PROC) #clear two bits
                     self.keyerState = self.CHK_DAH  #dit done, check for dah
-                    #print(utime.ticks_ms(),self.ktimer_end)
+                    
                 else:
                     self.keyerControl &= ~(self.DAH_L) #clear dah latch
                     self.keyerState = self.IDLE        #go idle
@@ -1261,13 +1271,13 @@ x -> exit Command mode
 
 # transmit pattern
 def play(pattern):
-    #print("play")
+    
     for sound in pattern:
         if sound == '.':
             cw(True)
-            #print(uutime.ticks_ms()())
+           
             utime.sleep(cw_time.dit_time()/1000)
-            #print(uutime.ticks_ms())
+           
             cw(False)
             utime.sleep(cw_time.dit_time()/1000)
         elif sound == '-':
@@ -1280,13 +1290,13 @@ def play(pattern):
     utime.sleep(2*cw_time.dit_time()/1000)
     
 def beep(pattern): # online Tone
-    #print("play")
+    
     for sound in pattern:
         if sound == '.':
             cw_beep(True)
-            #print(uutime.ticks_ms()())
+            
             utime.sleep(cw_time.dit_time()/1000)
-            #print(uutime.ticks_ms())
+            
             cw_beep(False)
             utime.sleep(cw_time.dit_time()/1000)
         elif sound == '-':
@@ -1300,7 +1310,7 @@ def beep(pattern): # online Tone
 
 def text2cw(str):
     for c in str:
-        #print(".")
+        
         if cb.button_press() == 0 :
             print("break")
             return
@@ -1309,7 +1319,7 @@ def text2cw(str):
             
 def text2beep(str):
     for c in str:
-        #print(".")
+       
         if cb.button_press() == 0 :
             print("break")
             return
@@ -1345,8 +1355,9 @@ print("keyer")
 ble = ESP32_BLE("ESP32BLE_CW")     # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
 #ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
-oe = OLED_Print() # print with oled display and BLE
-#oe = BLE_Print() # now OLED,  only print and BLE 
+#oe = CONSOLE_Print() # print only console
+oe = OLED_Print()   # print with oled display and BLE
+#oe = BLE_Print()    # now OLED,  only print and BLE 
 
 # user class
 
