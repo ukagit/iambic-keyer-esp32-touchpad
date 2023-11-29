@@ -111,8 +111,9 @@ the value of the parameter is sent. You remain in command mode.
 1. **DAT** key decreases the Value
 1. **DIT** key increases the WPM Value
 1. Press **Command button** to exit WPM.
- 
 
+### Save command 
+After changing parameters, don't forget to execute the save command.
 
 ## Software Installation
 
