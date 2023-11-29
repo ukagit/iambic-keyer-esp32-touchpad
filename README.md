@@ -1,11 +1,12 @@
 # Iambic Keyer for ESP32 with TouchPad
 
 IAMBIC keyer in MicroPython for ESP32
+
 * Iambic Mode A/B
-* Command function over keyer 
+* Command function over keyer
 * Display OLED SSD1306
-* Short key for command and WPM 
-* Send CW text from memory text-buffer 
+* Short key for command and WPM
+* Send CW text from memory text-buffer
 * Transmit by sound (internal speaker)
 * Transmit by LED
 * Transmit by optocoupler
@@ -21,42 +22,45 @@ The OLED display, and two more buttons: **Command** and **WPM/Text**.
 It is a minimalist device, based on the MicroPython `code`, installed on ESP32 with Thonny Tool.
 No `pcb` board, simply solder connectors directly on ESP32, and assemble it in a box.
 
-# Start 
+# Start
 
-After turning it on, the keyer **appears ready**. 
-The keyer is in send mode; you can input CW code using the **DIT** and **DAT** buttons. 
+After turning it on, the keyer **appears ready**.
+The keyer is in send mode; you can input CW code using the **DIT** and **DAT** buttons.
 The characters are sent directly to TX out, decoded, and displayed as text on the OLED display.
 
 Pressing the **Command button** switches to *Command* mode; pressing it again returns to *operation* mode."
 
 # Use
+
 ## Operate and Command Mode
 
-### Operate 
+### Operate
+
 You can send MORSE code with the **DIT** **DAT** paddle.
 
 ### Command
+
 Hit the command button and use a morse letter for the command you will execute.
 
 ### Keyer Sound
+
 The *command* and *operation* mode are signaled by two different tone frequencies, command and sidetone.
 The sidetone can be turned off and on.
 
 ### The procedure for the Command mode is as follows:
 
-
-| Operation Mode | Command Mode | Responce |
-|:--------------:|:------------:|:-------:| 
-| Operation | | |
-| Button Command | | |
-| | c | Out time |
-| | Button Command | |
-| Operation | | |
-| Operation | | |
-| Button Command | | |
-| | o | Sidetone toggle (on) (off) |
-| | Button Command | |
-| Operation | | |
+| Operation Mode |  Command Mode  |          Responce          |
+|:--------------:|:--------------:|:--------------------------:| 
+|   Operation    |                |                            |
+| Button Command |                |                            |
+|                |       c        |          Out time          |
+|                | Button Command |                            |
+|   Operation    |                |                            |
+|   Operation    |                |                            |
+| Button Command |                |                            |
+|                |       o        | Sidetone toggle (on) (off) |
+|                | Button Command |                            |
+|   Operation    |                |                            |
 
 ### Command Table
 
@@ -67,30 +71,31 @@ The sidetone can be turned off and on.
 * ? -> request value of ...
 
 * i -> (?) TX_opt enable(on) disable(off)
- 
+
 * o -> (?) Sidetone toggle (on) (off)
 
 * f -> (?) adjust sidetone frequency
 * v -> (?) adjust sidetone volume 1-100
- 
+
 
 * t -> tune mode, end with command mode
-* s -> save parameter to  file
+* s -> save parameter to file
 
 * c -> show time
 * d -> show date
 
-* / -> print json data file 
+* / -> print json data file
 
 * x -> exit command mode
 
-**Note:** The definition of key-command is a copy from kn3g keyer, which I have been using for 5 years 
+**Note:** The definition of key-command is a copy from kn3g keyer, which I have been using for 5 years
 
 ### Query Parameters ?
-1. Press **command button**.  
-1. Send the **letter** "?" followed by the **letters** of the parameter. In response, 
-the value of the parameter is sent. You remain in command mode.
-1. End by pressing the **command button** 
+
+1. Press **command button**.
+1. Send the **letter** "?" followed by the **letters** of the parameter. In response,
+   the value of the parameter is sent. You remain in command mode.
+1. End by pressing the **command button**
 
 ***Example:*** ? v respond is 200
 
@@ -99,6 +104,7 @@ the value of the parameter is sent. You remain in command mode.
 ## Command Button
 
 ### Command for Send Memory Text
+
 1. Press **WPM button** once
 1. **DAT** key switches to the next text from the memory.
 1. **DIT** confirm your selection and start CW sending of the text,
@@ -107,32 +113,37 @@ the value of the parameter is sent. You remain in command mode.
 1. Press **Command button** to exit memory text recall mode.
 
 ### Command for Set WPM  Words Per Minute
+
 1. Press **WPM button** twice
 1. **DAT** key decreases the Value
 1. **DIT** key increases the WPM Value
 1. Press **Command button** to exit WPM.
 
-### Save command 
+### Save command
+
 After changing parameters, don't forget to execute the save command.
 
 ## Software Installation
 
-1. Install Thonny on your PC/MAC 
+1. Install Thonny on your PC/MAC
 2. Connect to an ESP32 via USB
 3. Copy all files to ESP32
 4. When everything works as intended, save the program as main.py
 5. If the JSON file is wrong, you can start in factory mode (hold command button while booting)
 
-## Error (-.-.--.-?) 
-If you enter a letter incorrectly or the character spacing is not correct, the character will not be recognized and a ? attached
+## Error (-.-.--.-?)
+
+If you enter a letter incorrectly or the character spacing is not correct, the character will not be recognized and a ?
+attached
 
 ```(-.-.--.-?) is not  (-.-.) (--.-) cq```
 
 That helps to send correct CW code with proper character and word spacing timing.
 
 ## Configuration
+
 Main parameters are set up in JSON file.
-You can change the parameters in command mode of the keyer, or edit the json.txt file.  
+You can change the parameters in command mode of the keyer, or edit the json.txt file.
 
 ```json
 "{\"threshold_key\": 200, 
@@ -146,7 +157,9 @@ You can change the parameters in command mode of the keyer, or edit the json.txt
 \"cq_txt_liste\": [\"cq cq de dl2dbg dl2dbg bk\", \"dl2dbg\", \"cq cq test dl2dbg\", \"cq\", \"uli\", \"cq cq\"]
 }"
 ```
+
 #### defintion in code
+
 ```pyhton
 self.cq_liste =["cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","uli","cq cq"]
 ```
@@ -155,27 +168,30 @@ self.cq_liste =["cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","u
 
 Hardware setup, pin on ESP32
 
-| Function            | Pin   |
-| ------------------- | ----- |
-| Onboard LED         | 2     |
-| External LED Pin    | 23    |
-| TX Opt Pin          | 4     |
-| CW Sound Pin        | 12    |
-|                     |       |
-| TouchPad DIT Pin    | 32    |
-| TouchPad DAH Pin    | 33    |
-|                     |       |
-| TouchPad Command Pin| 27    |
-| TouchPad WPM Pin    | 14    |
-|                     |       |
+| Function             | Pin |
+|----------------------|-----|
+| Onboard LED          | 2   |
+| External LED Pin     | 23  |
+| TX Opt Pin           | 4   |
+| CW Sound Pin         | 12  |
+|                      |     |
+| TouchPad DIT Pin     | 32  |
+| TouchPad DAH Pin     | 33  |
+|                      |     |
+| TouchPad Command Pin | 27  |
+| TouchPad WPM Pin     | 14  |
+|                      |     |
 
+![Schematic](./verdrahtung.png)
 ![Schematic](./optocopler.jpg)
 
-### Optocoupler 
+### Optocoupler
+
 The transmitter is controlled via an optocoupler open collector.  
 You can use a PC817 for this.
 
 ### High-Frequency Problem
+
 If there is a high-frequency problem, an RF filter can be connected to the line. Simple low pass.
 
 ## Assembly and Bill of Materials
@@ -191,13 +207,16 @@ KIS -> Keep It Simple
 ## Future
 
 ### Some Ideas / Options on Demand?
+
 No wishes :-)
 
 ## References
 
 Translator
+
 * MarkWoodworth xiaokey [https://github.com/MarkWoodworth/xiaokey](https://github.com/MarkWoodworth/xiaokey)
-* Iambic Morse Code Keyer Sketch Copyright (c) 2009 Steven T. Elliott [https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c](https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c)
+* Iambic Morse Code Keyer Sketch Copyright (c) 2009 Steven T.
+  Elliott [https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c](https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c)
 
 ## Hardware of My Keyer
 
@@ -205,9 +224,10 @@ Self-built in oak and brass. All buttons are touch.
 
 ![Schematic](./keyer1.jpg)
 
-## Different Hardware Setup 
+## Different Hardware Setup
 
 ### Option
+
 * OLED
 * BLE
 
@@ -229,10 +249,12 @@ oe = CONSOLE_Print() # print only console
 # oe = BLE_Print()    # now OLED, only print and BLE
 ```
 
-## Bluetooth Pairing 
+## Bluetooth Pairing
+
 Successfully tested with iPhone 12, MacBook, and Android Samsung.
 
 ## Bluetooth Pairing Fails?
+
 It may be that a connection is not possible. See the note for Android.
 
 ### Bluetooth Pairing Fails for Android Phones with MediaTek Chipset (IDFGH-5014)
@@ -240,37 +262,53 @@ It may be that a connection is not possible. See the note for Android.
 **Problem Description**  
 One-to-one copy from this link (https://github.com/espressif/esp-idf/issues/6800)
 
-The ESP32 Bluetooth cannot pair with certain Android phones that use MediaTek chips supporting Bluetooth 5.0. The affected phones include LG Stylo 6, LG Phoenix 5, and Alcatel 3V. Phones/tablets that do not use the MediaTek chipset for Bluetooth will pair with no issues, such as the Pixel, Pixel4 (Qualcomm), and Hytab-plus-10wb1 (XRadio).
+The ESP32 Bluetooth cannot pair with certain Android phones that use MediaTek chips supporting Bluetooth 5.0. The
+affected phones include LG Stylo 6, LG Phoenix 5, and Alcatel 3V. Phones/tablets that do not use the MediaTek chipset
+for Bluetooth will pair with no issues, such as the Pixel, Pixel4 (Qualcomm), and Hytab-plus-10wb1 (XRadio).
 
-When capturing the Bluetooth pairing packets, I noticed that there was an LL_REJECT_IND_EXT opcode from the device common to all affected phones, which may indicate why the connection was dropped. I also tried ESP-IDF Pre-release v4.3-beta2 with different Bluetooth module options, but the issues still persist.
+When capturing the Bluetooth pairing packets, I noticed that there was an LL_REJECT_IND_EXT opcode from the device
+common to all affected phones, which may indicate why the connection was dropped. I also tried ESP-IDF Pre-release
+v4.3-beta2 with different Bluetooth module options, but the issues still persist.
 
 ### Time Command
+
 The command output can be different.  
 Uptime reports the ESP32's time relative to January 1st, 2000.  
 Correct time because the system time was given by Thonny when starting.
 
 ### Power Consumption of ESP32
-The power consumption of an ESP32 microcontroller can vary significantly depending on various factors, such as connected peripheral devices, the activity of the microcontroller, and the implemented power-saving measures. Here are some general guidelines.
 
-#### Active Mode without BLE: 
-In active mode without BLE, the power consumption of the ESP32 can range from about 40 mA to several hundred mA, depending on the specific configuration and activities.
+The power consumption of an ESP32 microcontroller can vary significantly depending on various factors, such as connected
+peripheral devices, the activity of the microcontroller, and the implemented power-saving measures. Here are some
+general guidelines.
 
-#### Active Mode with BLE: 
-When BLE is enabled, power consumption usually increases. The exact consumption depends on the BLE configuration and transmission activity. A typical estimate could range from 60 mA to 100 mA.
+#### Active Mode without BLE:
+
+In active mode without BLE, the power consumption of the ESP32 can range from about 40 mA to several hundred mA,
+depending on the specific configuration and activities.
+
+#### Active Mode with BLE:
+
+When BLE is enabled, power consumption usually increases. The exact consumption depends on the BLE configuration and
+transmission activity. A typical estimate could range from 60 mA to 100 mA.
 
 ## Add-On Software
+
 It's still tests and utility programs on GitHub.
+
 * `i2csan.py` for HW test of the I2C display.
 * `touch_demo` for testing the touch key.
 * `ble_test` simple BLE server with output number, test for scan, connect, and receive.
 
 ### touch_demo1
 
-`touch_demo1` helps to test the touch pin. It will output a value that changes with and without contact. Use this to adjust the threshold value.
+`touch_demo1` helps to test the touch pin. It will output a value that changes with and without contact. Use this to
+adjust the threshold value.
 
 ---
 
 ### MicroPython Version
+
 READY for new MicroPython v1.21.0 on 2023-10-05;
 
 
