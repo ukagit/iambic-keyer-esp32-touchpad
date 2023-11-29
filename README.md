@@ -1,66 +1,64 @@
-# iambic keyer for es32 with touchPad
+# Iambic Keyer for ESP32 with TouchPad
 
-
-IAMBIC keyer in micropython esp32
+IAMBIC keyer in MicroPython for ESP32
 * Iambic Mode A/B
-* command function over keyer 
-* display OLED ssd1306
-* short key for command and WPM 
-* send CW text from memoery text-buffer 
+* Command function over keyer 
+* Display OLED SSD1306
+* Short key for command and WPM 
+* Send CW text from memory text-buffer 
 * Transmit by sound (internal speaker)
 * Transmit by LED
 * Transmit by optocoupler
 * Parameters are stored in a JSON file
-* bluetooth send, output text from keyer and command infos
+* Bluetooth send, output text from keyer, and command infos
 
- ---
+---
 
-![schematic](./keyer3.jpg)
+![schematic](./keyer1.jpg)
 
-On the photo, you can see the CW Keyer with the two paddles, DIT, and DAT.  
-The OLED display, and two more buttons: Command and WPM/Text.
-It is a minimalist device, based on the micropython `code`, installed on esp32 with Thonny Tool.
-No `pcb` board, simply, solder connectors directly on esp32, and/or assemble it in a box.
+In the photo, you can see the CW Keyer with the two paddles, **DIT**, and **DAT**.  
+The OLED display, and two more buttons: **Command** and **WPM/Text**.  
+It is a minimalist device, based on the MicroPython `code`, installed on ESP32 with Thonny Tool.
+No `pcb` board, simply solder connectors directly on ESP32, and assemble it in a box.
 
 # Start 
 
-After turning it on, the keyer appears ready. 
-The keyer is in send mode; you can input CW code using the DIT and DAH buttons. 
-The characters are sent directly to TX out.
-decoded and displayed as text on the OLED display.
+After turning it on, the keyer **appears ready**. 
+The keyer is in send mode; you can input CW code using the **DIT** and **DAT** buttons. 
+The characters are sent directly to TX out, decoded, and displayed as text on the OLED display.
 
-Pressing the Command button switches to Command mode; pressing it again returns to operation mode."
+Pressing the **Command button** switches to *Command* mode; pressing it again returns to *operation* mode."
 
-# USE
-## operate and command mode
+# Use
+## Operate and Command Mode
 
-### operate 
-You can send MORSE code with the **DIT** **DAT** paddel.
+### Operate 
+You can send MORSE code with the **DIT** **DAT** paddle.
 
-### command
-Hit the command button and use a morse letter 
+### Command
+Hit the command button and use a morse letter for the command you will execute.
 
-### keyer sound
-The command and operation mode are signaled by two different tone frequencies command and sidetone.
+### Keyer Sound
+The *command* and *operation* mode are signaled by two different tone frequencies, command and sidetone.
 The sidetone can be turned off and on.
 
 ### The procedure for the Command mode is as follows:
 
 
-| operation mode | command  mode  |          responce          |
-|:---------------|:---------------|:--------------------------:| 
-| operation      |                |                            |
-| Button Command |                |                            |
-|                | c              |          out time          |
-|                | Button Command |                            |
-| operation      |                |                            |
-| operation      |                |                            |
-| Button Command |                |                            |
-|                | o              | Sidetone toggle (on) (off) |
-|                | Button Command |                            |
-| operation      |                |          
+| Operation Mode | Command Mode | Responce |
+|:--------------:|:------------:|:-------:| 
+| Operation | | |
+| Button Command | | |
+| | c | Out time |
+| | Button Command | |
+| Operation | | |
+| Operation | | |
+| Button Command | | |
+| | o | Sidetone toggle (on) (off) |
+| | Button Command | |
+| Operation | | |
 
-### command table
+### Command Table
 
 * a -> Iambic Mode A
 * b -> Iambic Mode B
@@ -86,32 +84,32 @@ The sidetone can be turned off and on.
 
 * x -> exit command mode
 
-**note** The definition of key-command is a copy from kn3g keyer, which I have been using for 5 years 
+**Note:** The definition of key-command is a copy from kn3g keyer, which I have been using for 5 years 
 
-### Query parameters ?
+### Query Parameters ?
 1. Press **command button**.  
 1. Send the **letter** "?" followed by the **letters** of the parameter. In response, 
 the value of the parameter is sent. You remain in command mode.
 1. End by pressing the **command button** 
 
-***example*** ? v respond is 200
+***Example:*** ? v respond is 200
 
-**Node** All commands with a question mark (?) can be queried
+**Note:** All commands with a question mark (?) can be queried
 
 ## Command Button
 
-### Command for send memory text
+### Command for Send Memory Text
 1. Press **WPM button** once
 1. **DAT** key switches to the next text from the memory.
-1. **DIT** confirm your selection and starts cw sending of the text,
+1. **DIT** confirm your selection and start CW sending of the text,
 1. another **DIT** calls up the text again
 1. **DAT** key switches to the next text from the memory.
 1. Press **Command button** to exit memory text recall mode.
 
-### Command for set WPM  words per minute
+### Command for Set WPM  Words Per Minute
 1. Press **WPM button** twice
-1. **DAT** key decrease the Value
-1. **DIT** key inecrise the WPM Value
+1. **DAT** key decreases the Value
+1. **DIT** key increases the WPM Value
 1. Press **Command button** to exit WPM.
  
 
@@ -119,21 +117,23 @@ the value of the parameter is sent. You remain in command mode.
 ## Software Installation
 
 1. Install Thonny on your PC/MAC 
-2. connect to a esp32 to USB
-3. copy all file to esp32
-4. when everything works as intended, save the program as main.py
-5. if the  json file is wrong, you can start in factorymode (hold command button while booting)
+2. Connect to an ESP32 via USB
+3. Copy all files to ESP32
+4. When everything works as intended, save the program as main.py
+5. If the JSON file is wrong, you can start in factory mode (hold command button while booting)
 
 ## Error (-.-.--.-?) 
 If you enter a letter incorrectly or the character spacing is not correct, the character will not be recognized and a ? attached
 
-(-.-.--.-?) is not  (-.-.) (--.-) cq
+```(-.-.--.-?) is not  (-.-.) (--.-) cq```
+
+That helps to send correct CW code with proper character and word spacing timing.
 
 ## Configuration
-Main parameters are set up in json file.
+Main parameters are set up in JSON file.
 You can change the parameters in command mode of the keyer, or edit the json.txt file.  
 
-```
+```json
 "{\"threshold_key\": 200, 
 \"sidetone_freq\": 700, 
 \"iambic_mode\": 16, 
@@ -146,134 +146,130 @@ You can change the parameters in command mode of the keyer, or edit the json.txt
 }"
 ```
 #### defintion in code
-```
+```pyhton
 self.cq_liste =["cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","uli","cq cq"]
 ```
 
 ## Pinout
 
- Hardwaresetup, pin on esp32
+Hardware setup, pin on ESP32
 
+| Function            | Pin   |
+| ------------------- | ----- |
+| Onboard LED         | 2     |
+| External LED Pin    | 23    |
+| TX Opt Pin          | 4     |
+| CW Sound Pin        | 12    |
+|                     |       |
+| TouchPad DIT Pin    | 32    |
+| TouchPad DAH Pin    | 33    |
+|                     |       |
+| TouchPad Command Pin| 27    |
+| TouchPad WPM Pin    | 14    |
+|                     |       |
 
-| function           | pin   |
-:---------------|:------| 
-|onboard_led   | 2     |
-|extern_led_pin | 23    |
-|tx_opt_pin      | 4     |
-|cw_sound_pin     | 12    |
-| |       |
-|touchPad_dit_pin | 32    |
-|touchPad_dah_pin | 33    |
-||       |
-|touchPad_command_pin | 27    |
-|touchPad_wpm_pin     |  14   |
-||       |
+![Schematic](./optocopler.jpg)
 
-![schematic](./optocopler.jpg)
-### optocoupler 
-The transmitter is controlled via an optocoupler open collector.   
+### Optocoupler 
+The transmitter is controlled via an optocoupler open collector.  
 You can use a PC817 for this.
 
-### high frequency problem
-If there is a high frequency problem, an RF filter can be connected to the line. simple low pass.
-
+### High-Frequency Problem
+If there is a high-frequency problem, an RF filter can be connected to the line. Simple low pass.
 
 ## Assembly and Bill of Materials
 
-KIS -> keep it simple
+KIS -> Keep It Simple
 
-* J2 2.5mm  jack (headphone)
-* optocoupler for connecting the transceiver
-* button for command mode
-* button for WPM (words per minute) 
-* option for external command led
+* J2 2.5mm jack (headphone)
+* Optocoupler for connecting the transceiver
+* Button for command mode
+* Button for WPM (words per minute)
+* Option for external command LED
 
 ## Future
 
-#### Some Ideas / options on demand?
-no wishes :-)
-
-
+### Some Ideas / Options on Demand?
+No wishes :-)
 
 ## References
-übersetzer
-* MarkWoodworth xiaokey https://github.com/MarkWoodworth/xiaokey
-* Iambic Morse Code Keyer Sketch Copyright (c) 2009 Steven T. Elliott https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c
 
-## Hardware of my keyer
-Self-built in oak and brass.
-all Buttons are touch.
+Translator
+* MarkWoodworth xiaokey [https://github.com/MarkWoodworth/xiaokey](https://github.com/MarkWoodworth/xiaokey)
+* Iambic Morse Code Keyer Sketch Copyright (c) 2009 Steven T. Elliott [https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c](https://github.com/sergev/vak-opensource/blob/master/hamradio/arduino-keyer.c)
 
-![schematic](./keyer1.jpg)
+## Hardware of My Keyer
 
-## Different hardware setup 
-#### option
-* OLED 
-* BLE 
+Self-built in oak and brass. All buttons are touch.
 
-In the code are different class difintion. One is "aktive" the ather other is "dummy".  
+![Schematic](./keyer1.jpg)
+
+## Different Hardware Setup 
+
+### Option
+* OLED
+* BLE
+
+In the code are different class definitions. One is "active," the other is "dummy."  
 You can enable or disable the class by simple comment out.
 
-## OE Class selction
-1. print only on console
-1. print on console and oled display
-2. print on console, OLED Display and BLE
-```
-ble = ESP32_BLE("ESP32BLE_CW")     # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
-#ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+## OE Class Selection
+
+1. Print only on console
+2. Print on console and OLED display
+3. Print on console, OLED display, and BLE
+
+```python
+ble = ESP32_BLE("ESP32BLE_CW")     # BLE enable # use Serial Terminal like "esp32 ble terminal on iPhone"
+# ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE disable an empty class definition
 
 oe = CONSOLE_Print() # print only console
-#oe = OLED_Print()   # print with oled display and BLE
-#oe = BLE_Print()    # now OLED,  only print and BLE 
+# oe = OLED_Print()   # print with OLED display and BLE
+# oe = BLE_Print()    # now OLED, only print and BLE
 ```
 
-
-## Bluetooth pairing 
+## Bluetooth Pairing 
 Successfully tested with iPhone 12, MacBook, and Android Samsung.
 
-## Bluetooth pairing fails ?
-It may be that a connection is not possible
-See note Android.
+## Bluetooth Pairing Fails?
+It may be that a connection is not possible. See the note for Android.
 
-### Bluetooth pairing fails for Android phones with MediaTek chipset (IDFGH-5014)
+### Bluetooth Pairing Fails for Android Phones with MediaTek Chipset (IDFGH-5014)
 
-Problem Description 
-[(one2one copy from this Link )](https://github.com/espressif/esp-idf/issues/6800)
+**Problem Description**  
+One-to-one copy from this link (https://github.com/espressif/esp-idf/issues/6800)
 
-The ESP32 Bluetooth cannot pair with certain Android phones that use MediaTek chips that support Bluetooth 5.0. The affected phones include LG Stylo 6, LG Phoenix 5, and Alcatel 3V. Phones/tablets that do not use the MediaTek chipset for Bluetooth will pair with no issues such as the Pixel, Pixel4 (qualcom) and Hytab-plus-10wb1 (xradio).
+The ESP32 Bluetooth cannot pair with certain Android phones that use MediaTek chips supporting Bluetooth 5.0. The affected phones include LG Stylo 6, LG Phoenix 5, and Alcatel 3V. Phones/tablets that do not use the MediaTek chipset for Bluetooth will pair with no issues, such as the Pixel, Pixel4 (Qualcomm), and Hytab-plus-10wb1 (XRadio).
 
-When capturing the Bluetooth pairing packets, I noticed that there was LL_REJECT_IND_EXT opcode from the device that was common for all the affected phones which may indicate why the connection was dropped. Also tried ESP-IDF Pre-release v4.3-beta2 with different bluetooth module options but the issues still persists.
+When capturing the Bluetooth pairing packets, I noticed that there was an LL_REJECT_IND_EXT opcode from the device common to all affected phones, which may indicate why the connection was dropped. I also tried ESP-IDF Pre-release v4.3-beta2 with different Bluetooth module options, but the issues still persist.
 
-### time command
+### Time Command
 The command output can be different.  
-uptime, reports the ESP32's time relative to January 1st 2000.  
-Correct time because the system time was given by thonny when starting.
+Uptime reports the ESP32's time relative to January 1st, 2000.  
+Correct time because the system time was given by Thonny when starting.
 
-### Power consumption of ESP32
-The power consumption of an ESP32 microcontroller can vary significantly depending on various factors such as connected peripheral devices, the activity of the microcontroller, and the implemented power-saving measures. Here are some general guidelines.
+### Power Consumption of ESP32
+The power consumption of an ESP32 microcontroller can vary significantly depending on various factors, such as connected peripheral devices, the activity of the microcontroller, and the implemented power-saving measures. Here are some general guidelines.
 
-#### Active mode without BLE: 
+#### Active Mode without BLE: 
 In active mode without BLE, the power consumption of the ESP32 can range from about 40 mA to several hundred mA, depending on the specific configuration and activities.
-#### Active mode with BLE: 
+
+#### Active Mode with BLE: 
 When BLE is enabled, power consumption usually increases. The exact consumption depends on the BLE configuration and transmission activity. A typical estimate could range from 60 mA to 100 mA.
 
-
-## Addone software
-It's still tests and utility programs in the GitHub.
-* i2csan.py  for HW test of the I2C display 
-* touch_demo for test the touch key
-* ble_test simple BLE server with output numer, test for scan, connect, und receive.
+## Add-On Software
+It's still tests and utility programs on GitHub.
+* `i2csan.py` for HW test of the I2C display.
+* `touch_demo` for testing the touch key.
+* `ble_test` simple BLE server with output number, test for scan, connect, and receive.
 
 ### touch_demo1
 
-touch_demo1 help to test the touch pin.
-It will output a value that changes with and without contact. 
-Use this to adjust the threshold value.
-
+`touch_demo1` helps to test the touch pin. It will output a value that changes with and without contact. Use this to adjust the threshold value.
 
 ---
-### Version
-READY for new MicroPython v1.21.0 on 2023-10-05;
 
+### MicroPython Version
+READY for new MicroPython v1.21.0 on 2023-10-05;
 
 
