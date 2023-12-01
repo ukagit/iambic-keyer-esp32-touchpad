@@ -1,3 +1,4 @@
+# 1.12.23 version 0.96
 # 28.11.23 version 0.95
 # 23.11.23 self.cq_liste and threshold_key in json file include
 # 21.11.23 ready for new version MicroPython v1.21.0 on 2023-10-05
@@ -48,12 +49,6 @@ import ujson
 
 # wifi 23.11.23
 
-# user data for WIFI
-ssid = "your_wifi_ssid"
-pw = "your_wifi_pw"
-
-ssid = "wuka"
-pw = "wirhabenkeinenschwarzenhund"
 
 
 class ESP32_BLE():
