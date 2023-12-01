@@ -77,7 +77,9 @@ The sidetone can be turned off and on.
 * f -> (?) adjust sidetone frequency
 * v -> (?) adjust sidetone volume 1-100
 
-
+* r -> (?) adjust dit dat ration volume 2.3-3.7
+* w -> (?) adjust word per 
+* 
 * t -> tune mode, end with command mode
 * s -> save parameter to file
 
@@ -90,7 +92,15 @@ The sidetone can be turned off and on.
 
 **Note:** The definition of key-command is a copy from kn3g keyer, which I have been using for 5 years
 
+
+### CW timing 
+#### RATIO 
+With command **r** you can adjust the length(DASH)/length(DOT) ratio 
+2.3 3.7
+#### WPM
+With command **w** , wpm (Words Per Minute) you can adjust the cw speed.
 ### Query Parameters ?
+
 
 1. Press **command button**.
 1. Send the **letter** "?" followed by the **letters** of the parameter. In response,
