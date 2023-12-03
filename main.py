@@ -1,4 +1,4 @@
-# 1.12.23 version 0.96
+# 2.12.23 version 0.961 wpm issu is solve
 # 28.11.23 version 0.95
 # 23.11.23 self.cq_liste and threshold_key in json file include
 # 21.11.23 ready for new version MicroPython v1.21.0 on 2023-10-05
@@ -588,7 +588,7 @@ class cw_timing(): # cw timing wird als eigene classe verwaltet, kann daher auch
         return 60.0 / self.wpm_t / self.PARIS * 1000  ## mili sekunden
     
     def set_wpm(self, wpm):
-        self.wpmt = wpm
+        self.wpm_t = wpm
     # timing
     def get_ratio(self): 
         return self.ratio_t
@@ -685,7 +685,7 @@ x -> exit Command mode
         self.cq_liste = ["", "", "", "", "", "", ""]
 
         self.tx_enable = 0
-        self.txt_enable = 0
+        #self.txt_enable = 0
         self.sidetone_enable = 1
         self.sidetone_freq = 700  #
         self.sidetone_volume = 10  # range 1,100 * 200 -> 2000 #30000 laut
@@ -744,7 +744,7 @@ x -> exit Command mode
         self.set_data("sidetone_volume", self.sidetone_volume)
 
         self.set_data("tx_enamble", self.tx_enable)
-        self.set_data("txt_emable", self.txt_enable)
+       # self.set_data("txt_emable", self.txt_enable)
 
         self.set_data("threshold_key", self.threshold_key)
 
@@ -754,7 +754,7 @@ x -> exit Command mode
 
     def print_parameter(self):  # write new json file
 
-        oe.print_smal("---Paramter", 0)
+        oe.print_smal("---Parameter", 0)
         oe.print_smal("iambic_mode     :" + str(self.iambic_mode), 0)  # transmit
         oe.print_smal("wpm             :" + str(self.wpm), 0)
         oe.print_smal("ratio           :" + str(self.ratio), 0)
@@ -764,7 +764,7 @@ x -> exit Command mode
         oe.print_smal("sidetone_volume :" + str(self.sidetone_volume), 0)
 
         oe.print_smal("tx_enamble      :" + str(self.tx_enable), 0)
-        oe.print_smal("txt_emable      :" + str(self.txt_enable), 0)
+        #oe.print_smal("txt_emable      :" + str(self.txt_enable), 0)
 
         oe.print_smal("threshold_key      :" + str(self.threshold_key), 0)
         oe.print_smal("cq_txt_liste     :" + str(self.cq_liste), 0)
@@ -783,7 +783,7 @@ x -> exit Command mode
         self.sidetone_volume = self.iambic_data["sidetone_volume"]
 
         self.tx_enamble = self.iambic_data["tx_enamble"]
-        self.txt_emable = self.iambic_data["txt_emable"]
+       # self.txt_emable = self.iambic_data["txt_emable"]
 
         self.threshold_key = self.iambic_data["threshold_key"]
 
