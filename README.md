@@ -239,6 +239,9 @@ Self-built in oak and brass. All buttons are touch.
 
 ![Schematic](./keyer1.jpg)
 
+A second one, built as a keyer in a box without a display and with simple sensor buttons.
+![Schematic](./keyer_dose.jpg)
+
 ## Different Hardware Setup
 
 ### Option
