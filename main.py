@@ -1,3 +1,5 @@
+# 5.12.23 version 0.963 test ok :-)
+# 4.12.23 version 0.962 weighting 
 # 2.12.23 version 0.961 wpm issu is solve
 # 28.11.23 version 0.95
 # 23.11.23 self.cq_liste and threshold_key in json file include
@@ -46,9 +48,6 @@ import ubluetooth
 import utime  # utime is the micropython brother of time
 import time
 import ujson
-
-# wifi 23.11.23
-
 
 
 class ESP32_BLE():
@@ -580,22 +579,36 @@ def cw_beep(state):  # only Beep
 
 class cw_timing(): # cw timing wird als eigene classe verwaltet, kann daher auch ohne IAMBIC class eingesetzt werden
     def __init__(self, wpm=18):
-        self.wpm_t = wpm # wpmt local 
+        self.wpm_t = wpm # wpmt local
+        
 
     # timing
-    def dit_time(self):
+    def dit_time(self): #aktive
         self.PARIS = 50
-        return 60.0 / self.wpm_t / self.PARIS * 1000  ## mili sekunden
+       # return 60.0 / self.wpm_t / self.PARIS * 1000 /50*(self.weighting_t) ## mili sekunden
+        return 60.0 / self.wpm_t / self.PARIS * 1000 /50*(self.weighting_t) ## mili sekunden
+    
+    def pdit_time(self): #pasive
+        self.PARIS = 50
+        return 60.0 / self.wpm_t / self.PARIS * 1000  /50*(100-self.weighting_t)## mili sekunden
+        
     
     def set_wpm(self, wpm):
         self.wpm_t = wpm
-    # timing
+        
     def get_ratio(self): 
         return self.ratio_t
     
     def set_ratio(self, ratio):
         self.ratio_t = ratio
+        
+    def get_weighting(self): 
+        return self.weighting_t
+        
     
+    def set_weighting(self, weighting):
+        self.weighting_t = weighting
+        
 
 
 # decode iambic b paddles
@@ -673,12 +686,15 @@ x -> exit Command mode
 
         self.adj_sidetone_volume = 0 # def for state machine   
         self.adj_ratio = 0
+        self.adj_weighting = 0
+        
 
         # this variable are default an will be overwrite with the json file
         #
         self.iambic_mode = 0x10  # 0 for Iambic A, 1 for Iambic B
         self.wpm = 18
         self.ratio = 3.0 # ration dit/dah
+        self.weighting = 50 
         
         self.cq = 0
         # self.cq_liste =["","cq cq de dl2dbg dl2dbg bk","dl2dbg","cq cq test dl2dbg","cq","uli","cq cq"]
@@ -702,9 +718,13 @@ x -> exit Command mode
 
         self.wpm = self.iambic_data["wpm"]
         self.ratio = self.iambic_data["ratio"]
+        self.weighting = self.iambic_data["weighting"]
+        
+        
         
         cw_time.set_wpm(self.wpm) # class timing setzen
         cw_time.set_ratio(self.ratio)
+        cw_time.set_weighting(self.weighting)
 
         if cb.button_press() == 0:  # not press "0" -> json date read,and init, if "0" use factory setting
             print("**** default data")
@@ -738,6 +758,8 @@ x -> exit Command mode
         self.set_data("iambic_mode", self.iambic_mode)  # transmit
         self.set_data("wpm", self.wpm)
         self.set_data("ratio", self.ratio)
+        self.set_data("weighting", self.weighting)
+        
 
         self.set_data("sidetone_enable", self.sidetone_enable)
         self.set_data("sidetone_freq", self.sidetone_freq)
@@ -758,6 +780,7 @@ x -> exit Command mode
         oe.print_smal("iambic_mode     :" + str(self.iambic_mode), 0)  # transmit
         oe.print_smal("wpm             :" + str(self.wpm), 0)
         oe.print_smal("ratio           :" + str(self.ratio), 0)
+        oe.print_smal("weighting       :" + str(self.weighting), 0)
 
         oe.print_smal("sidetone_enable :" + str(self.sidetone_enable), 0)
         oe.print_smal("sidetone_freq   :" + str(self.sidetone_freq), 0)
@@ -777,6 +800,8 @@ x -> exit Command mode
         self.iambic_mode = self.iambic_data["iambic_mode"]
         self.wpm = self.iambic_data["wpm"]
         self.ratio = self.iambic_data["ratio"]
+        self.weighting = self.iambic_data["weighting"]
+        
 
         self.sidetone_enable = self.iambic_data["sidetone_enable"]
         self.sidetone_freq = self.iambic_data["sidetone_freq"]
@@ -792,6 +817,9 @@ x -> exit Command mode
         # set extern Parameter
         cw_time.set_wpm(self.wpm)
         cw_time.set_ratio(self.ratio)
+        cw_time.set_weighting(self.weighting)
+        
+        
         
         cwt.set_tonfreq(self.sidetone_freq)
         cwt.volume(self.sidetone_volume * 200)
@@ -921,8 +949,8 @@ x -> exit Command mode
                 # tx.on()
 
                 if self.state_key_dah() == self.LOW:  # transmit on
-                    if self.ratio >= 3.7: #max ratio
-                        self.ratio = 3.7
+                    if self.ratio >= 6: #max ratio
+                        self.ratio = 6
                         text2beep("max")
                     else:
                         self.ratio = round(self.ratio + 0.1,1) 
@@ -932,8 +960,8 @@ x -> exit Command mode
                         beep("-")
 
                 elif self.state_key_dit() == self.LOW:  # transmit off
-                    if self.ratio <= 2.3: #min ratio
-                        self.ratio = 2.3
+                    if self.ratio <= 1.3: #min ratio
+                        self.ratio = 1.3
                         text2beep("min")
                     else:
                         self.ratio = round(self.ratio - 0.1,1)
@@ -943,6 +971,36 @@ x -> exit Command mode
                         beep(".")
                 return
             
+            elif self.adj_weighting == 1:  # adjust ratio 
+
+                self.keyerSate = self.IDLE
+                self.tx_enable = 1
+                # tx.on()
+
+                if self.state_key_dah() == self.LOW:  # transmit on
+                    if self.weighting >= 90: #max ratio
+                        self.weighting = 90
+                        text2beep("max")
+                    else:
+                        self.weighting =  self.weighting +  1
+                        cw_time.set_weighting(self.weighting)
+                        oe.print_smal("weighting:" + str(self.weighting), cb.comannd_state)
+                        # print(self.sidetone_volume)
+                        beep("-")
+
+                elif self.state_key_dit() == self.LOW:  # transmit off
+                    if self.weighting <= 10: #min ratio
+                        self.weighting = 10
+                        text2beep("min")
+                    else:
+                        self.weighting =  self.weighting -1
+                        cw_time.set_weighting(self.weighting)
+                        oe.print_smal("weighting:" + str(self.weighting), cb.comannd_state)
+                        # print(self.sidetone_volume)
+                        beep(".")
+                return
+            
+
 
             elif self.adj_wpm == 1 or cb.short_c_state == 1 or cb.short_c_state == 2:  # begin tune
 
@@ -994,20 +1052,21 @@ x -> exit Command mode
             self.adj_wpm = 0
             self.adj_sidetone_volume = 0
             self.adj_ratio = 0
+            self.adj_weighting = 0 
             self.request = 0
 
         if self.keyerState == self.IDLE:
             # Wait for direct or latched paddle press
             # word grenze erkennen
 
-            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 4.5):  # Word space time
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.pdit_time() * 4.5):  # Word space time
                 if self.in_word:
                     self.in_word = False
 
                     oe.print_smal(self.word, 0)
                     self.word = ""
 
-            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 1.5): # chare space time
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.pdit_time() * 1.5): # chare space time
 
                 if self.in_char:
                     self.in_char = False
@@ -1107,12 +1166,20 @@ x -> exit Command mode
 
 
                         elif Char == "r":  # ratio  controll
-                            oe.print_smal("r dit/da ratio ", cb.comannd_state)
+                            oe.print_smal("r ratio dit/da ", cb.comannd_state)
                             if self.request == 1:
-                                self.print_request(str(self.sidetone_volume * 200))
+                                self.print_request(str(self.ratio))
 
                             else:
                                 self.adj_ratio = 1
+                                
+                        elif Char == "l":  # weighting  controll
+                            oe.print_smal("l weighting dit/da ", cb.comannd_state)
+                            if self.request == 1:
+                                self.print_request(str(self.weighting))
+
+                            else:
+                                self.adj_weighting = 1
                                 
                         elif Char == "v":  # sidetone volume controll
                             oe.print_smal("v sidetone volume", cb.comannd_state)
@@ -1275,19 +1342,23 @@ def play(pattern):
     for sound in pattern:
         if sound == '.':
             cw(True)
-
+            
             utime.sleep(cw_time.dit_time() / 1000)
 
             cw(False)
-            utime.sleep(cw_time.dit_time() / 1000)
+            
+            utime.sleep(cw_time.pdit_time() / 1000)
         elif sound == '-':
             cw(True)
+           
             utime.sleep(cw_time.get_ratio() * cw_time.dit_time() / 1000) # ration 2.3-3.7
             cw(False)
-            utime.sleep(cw_time.dit_time() / 1000)
+            
+            utime.sleep(cw_time.pdit_time() / 1000)
         elif sound == ' ':
-            utime.sleep(4 * cw_time.dit_time() / 1000)
-    utime.sleep(2 * cw_time.dit_time() / 1000)
+           
+            utime.sleep(4 * cw_time.pdit_time() / 1000)
+    utime.sleep(2 * cw_time.pdit_time() / 1000)
 
 
 def beep(pattern):  # online Tone
@@ -1299,15 +1370,15 @@ def beep(pattern):  # online Tone
             utime.sleep(cw_time.dit_time() / 1000)
 
             cw_beep(False)
-            utime.sleep(cw_time.dit_time() / 1000)
+            utime.sleep(cw_time.pdit_time() / 1000)
         elif sound == '-':
             cw_beep(True)
             utime.sleep(cw_time.get_ratio() * cw_time.dit_time() / 1000)
             cw_beep(False)
-            utime.sleep(cw_time.dit_time() / 1000)
+            utime.sleep(cw_time.pdit_time() / 1000)
         elif sound == ' ':
-            utime.sleep(4 * cw_time.dit_time() / 1000)
-    utime.sleep(2 * cw_time.dit_time() / 1000)
+            utime.sleep(4 * cw_time.pdit_time() / 1000)
+    utime.sleep(2 * cw_time.pdit_time() / 1000)
 
 
 def text2cw(str):
@@ -1353,8 +1424,8 @@ print("keyer")
 
 # setting different hardware
 
-ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
-# ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+# ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
+ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
 # oe = CONSOLE_Print() # print only console
 oe = OLED_Print()  # print with oled display and BLE

@@ -78,10 +78,12 @@ The sidetone can be turned off and on.
 * v -> (?) adjust sidetone volume 1-100
 
 * r -> (?) adjust dit dat ration volume 2.3-3.7
-* w -> (?) adjust word per 
+* w -> (?) adjust Words Per Minute
 * 
 * t -> tune mode, end with command mode
 * s -> save parameter to file
+
+* l  Adjust weighting
 
 * c -> show time
 * d -> show date
@@ -95,8 +97,11 @@ The sidetone can be turned off and on.
 
 ### CW timing 
 #### RATIO 
-With command **r** you can adjust the length(DASH)/length(DOT) ratio 
-2.3 3.7
+With command **r** you can adjust the length(DASH)/length(DOT) ratio
+1.3 to 6
+### Weighting 
+Adjust Weighting the time DIT high/low default ist 50% 
+
 #### WPM
 With command **w** , wpm (Words Per Minute) you can adjust the cw speed.
 ### Query Parameters ?
