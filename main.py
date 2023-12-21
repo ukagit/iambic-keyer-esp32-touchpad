@@ -1,3 +1,4 @@
+VERSION = "0.964 20.12.23" #speed controll command r,l,h 
 # 5.12.23 version 0.963 test ok :-)
 # 4.12.23 version 0.962 weighting 
 # 2.12.23 version 0.961 wpm issu is solve
@@ -228,8 +229,7 @@ class BLE_Print():
             print(f'\033[0m')
 
     def print_dark(self):  # dark display
-        self.oled.fill(0)
-        self.oled.show()
+        pass
 
 
 #
@@ -314,6 +314,9 @@ MAP('-...-', '=')  # equals, also /BT separator
 MAP('-....-', '-')  # hyphen
 MAP('-..-.', '/')  # forward slash
 MAP('.--.-.', '@')  # at sign
+MAP('-.-.-', 'KA')  # Spruchanfang
+MAP('.-.-.', 'AR')  # Spruchende
+MAP('...-.-', 'SK')  # Verkehrende
 
 
 class watch_ideal():
@@ -424,7 +427,9 @@ class command_button():
 
         self.transmit_tune = 0  # dem tunemode sauber ausschalten
         cw(0)
-        txopt.off()
+        
+        if iambic.tx_enable:
+                            txopt.on()
 
     def button_state(self):
 
@@ -457,8 +462,8 @@ class command_button():
                 cwt.onoff(iambic.sidetone_enable)
                 txopt.on()
                 print("tx_en:", iambic.tx_enable)
-            # if iambic.tx_enable:
-            #                txopt.on()
+            if iambic.tx_enable:
+                            txopt.on()
 
         return (self.button_save)
 
@@ -578,29 +583,61 @@ def cw_beep(state):  # only Beep
 
 
 class cw_timing(): # cw timing wird als eigene classe verwaltet, kann daher auch ohne IAMBIC class eingesetzt werden
-    def __init__(self, wpm=18):
+    def __init__(self, wpm=18,weight = 50,ration = 3):
         self.wpm_t = wpm # wpmt local
-        
+        self.weighting_t = weight
+        self.ratio_t = ration
+        self.DOTtime = 60.0 # wird durch calk_dit_time gesetzt
+        self.pDOTtime = 60.0 # wird durch calk_dit_time gesetzt
+        self.calk_dit_time()
 
     # timing
-    def dit_time(self): #aktive
+    
+    def calk_dit_time(self): #aktive
+        
+        
+        #self.DOTtime_norm = 60 / (50 * self.wpm_t)  # sekunden  20 wpm seems to be about 0.1 sec 0.06
+
+        # umrechnung DOTime auf Paris normiert  ration_sign 1/3  weight_sign 50%
+        #(dithc, ditlc, dathc, sum) Paris  
+        #(10,     28,    12,   50)
+
+        #self.paris_time = DOTtime * (1 / 100 * w * dith + 1 / 100 * (100 - w) * ditl + 1 / 100 * w * dah * r)
+        
         self.PARIS = 50
-       # return 60.0 / self.wpm_t / self.PARIS * 1000 /50*(self.weighting_t) ## mili sekunden
-        return 60.0 / self.wpm_t / self.PARIS * 1000 /50*(self.weighting_t) ## mili sekunden
+        self.DOTtime_norm =  60.0 / self.wpm_t / self.PARIS * 1000  ## mili sekunden
+        
+        self.paris_time = self.DOTtime_norm * (1 / 100 * 50 * 10 + 1 / 100 * (100 - 50) * 28 + 1 / 100 * 50 * 12/3 * 3)
+        
+        
+        #calulation of normalized dotime
+        self.nDOTtime = self.paris_time / (1 / 100 * self.weighting_t * 10 + 1 / 100 * (100 - self.weighting_t) * 28 + 1 / 100 * self.weighting_t * 12/3 * self.ratio_t)
+        
+        self.DOTtime  = self.nDOTtime / 50 * (self.weighting_t)
+        self.pDOTtime  = self.nDOTtime / 50 * (100-self.weighting_t)
+        
+        #print(f"DOTtime:{self.DOTtime}, {self.pDOTtime}")
+        
+       
+        return 
+    
+    def dit_time(self): #aktive
+        return self.DOTtime
     
     def pdit_time(self): #pasive
-        self.PARIS = 50
-        return 60.0 / self.wpm_t / self.PARIS * 1000  /50*(100-self.weighting_t)## mili sekunden
+        return  self.pDOTtime
         
     
     def set_wpm(self, wpm):
         self.wpm_t = wpm
+        self.calk_dit_time()
         
     def get_ratio(self): 
         return self.ratio_t
     
     def set_ratio(self, ratio):
         self.ratio_t = ratio
+        self.calk_dit_time()
         
     def get_weighting(self): 
         return self.weighting_t
@@ -608,6 +645,8 @@ class cw_timing(): # cw timing wird als eigene classe verwaltet, kann daher auch
     
     def set_weighting(self, weighting):
         self.weighting_t = weighting
+        self.calk_dit_time()
+    
         
 
 
@@ -626,10 +665,14 @@ i -> TX_opt enable(on) disable(off)
 
 o -> Sidetone toggle (on) (off)
 
+
 f -> adjust sidetone frequenz
 v -> adjust sidetone volume 1-100
 
 w -> adjust WPM (Word per minute)
+r -> adjust ratio  controll r ratio dit/da
+l -> adjust weighting  controll dit high low time
+h -> Set weighting and dah to dit ratio to defaults
 
 t -> tune mode, end with command mode
 s -> save parameter to  file
@@ -701,7 +744,7 @@ x -> exit Command mode
         self.cq_liste = ["", "", "", "", "", "", ""]
 
         self.tx_enable = 0
-        #self.txt_enable = 0
+       
         self.sidetone_enable = 1
         self.sidetone_freq = 700  #
         self.sidetone_volume = 10  # range 1,100 * 200 -> 2000 #30000 laut
@@ -766,7 +809,7 @@ x -> exit Command mode
         self.set_data("sidetone_volume", self.sidetone_volume)
 
         self.set_data("tx_enamble", self.tx_enable)
-       # self.set_data("txt_emable", self.txt_enable)
+      
 
         self.set_data("threshold_key", self.threshold_key)
 
@@ -777,6 +820,7 @@ x -> exit Command mode
     def print_parameter(self):  # write new json file
 
         oe.print_smal("---Parameter", 0)
+        oe.print_smal(VERSION, 0)
         oe.print_smal("iambic_mode     :" + str(self.iambic_mode), 0)  # transmit
         oe.print_smal("wpm             :" + str(self.wpm), 0)
         oe.print_smal("ratio           :" + str(self.ratio), 0)
@@ -787,7 +831,7 @@ x -> exit Command mode
         oe.print_smal("sidetone_volume :" + str(self.sidetone_volume), 0)
 
         oe.print_smal("tx_enamble      :" + str(self.tx_enable), 0)
-        #oe.print_smal("txt_emable      :" + str(self.txt_enable), 0)
+        
 
         oe.print_smal("threshold_key      :" + str(self.threshold_key), 0)
         oe.print_smal("cq_txt_liste     :" + str(self.cq_liste), 0)
@@ -808,7 +852,7 @@ x -> exit Command mode
         self.sidetone_volume = self.iambic_data["sidetone_volume"]
 
         self.tx_enamble = self.iambic_data["tx_enamble"]
-       # self.txt_emable = self.iambic_data["txt_emable"]
+       
 
         self.threshold_key = self.iambic_data["threshold_key"]
 
@@ -1059,14 +1103,14 @@ x -> exit Command mode
             # Wait for direct or latched paddle press
             # word grenze erkennen
 
-            if utime.ticks_ms() > (self.ktimer_end + cw_time.pdit_time() * 4.5):  # Word space time
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 4.5):  # Word space time
                 if self.in_word:
                     self.in_word = False
 
                     oe.print_smal(self.word, 0)
                     self.word = ""
 
-            if utime.ticks_ms() > (self.ktimer_end + cw_time.pdit_time() * 1.5): # chare space time
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 1.5): # chare space time
 
                 if self.in_char:
                     self.in_char = False
@@ -1132,6 +1176,7 @@ x -> exit Command mode
                             self.tune = 1
                             if self.tune:
                                 text2beep("on")
+                        
                         # Get current time in UTC
                         elif Char == "c":  # clock mode
 
@@ -1163,6 +1208,19 @@ x -> exit Command mode
                             text2beep("time")
                             # text2beep(formatted_time)
                             cb.button_command_off()
+                            
+                        elif Char == "h":  # Set weighting and dah to dit ratio to defaults
+                            
+                            self.weighting =  50
+                            cw_time.set_weighting(self.weighting)
+                            
+                            self.ratio = 3.0 
+                            cw_time.set_ratio(self.ratio)
+                            
+                            oe.print_big("defaults r/w ", cb.comannd_state)
+                            text2beep("ok")
+                            cb.button_command_off()
+
 
 
                         elif Char == "r":  # ratio  controll
@@ -1316,7 +1374,7 @@ x -> exit Command mode
                 self.Key_sate = 0
                 cw(False)
 
-                self.ktimer = utime.ticks_ms() + cw_time.dit_time()  # inter-elemet time
+                self.ktimer = utime.ticks_ms() + cw_time.pdit_time()  # inter-elemet time
                 self.keyerState = self.INTER_ELEMENT  # next state
             else:
                 if (self.keyerControl & self.iambic_mode):
@@ -1339,6 +1397,7 @@ x -> exit Command mode
 
 # transmit pattern
 def play(pattern):
+    print(f"play-DOTtime:{cw_time.dit_time()}, {cw_time.pdit_time()}")
     for sound in pattern:
         if sound == '.':
             cw(True)
@@ -1362,7 +1421,7 @@ def play(pattern):
 
 
 def beep(pattern):  # online Tone
-
+    
     for sound in pattern:
         if sound == '.':
             cw_beep(True)
@@ -1424,12 +1483,12 @@ print("keyer")
 
 # setting different hardware
 
-# ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
-ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
+#ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
-# oe = CONSOLE_Print() # print only console
-oe = OLED_Print()  # print with oled display and BLE
-# oe = BLE_Print()    # now OLED,  only print and BLE
+#oe = CONSOLE_Print() # print only console
+# oe = OLED_Print()  # print with oled display and BLE
+oe = BLE_Print()    # now OLED,  only print and BLE
 
 # user class
 

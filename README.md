@@ -1,6 +1,7 @@
 # Iambic Keyer for ESP32 with TouchPad
++ VERSION = "0.964 20.12.23" 
 
-IAMBIC keyer in MicroPython for ESP32
+### IAMBIC keyer in MicroPython for ESP32
 
 * Iambic Mode A/B
 * Command function over keyer
@@ -28,7 +29,8 @@ After turning it on, the keyer **appears ready**.
 The keyer is in send mode; you can input CW code using the **DIT** and **DAT** buttons.
 The characters are sent directly to TX out, decoded, and displayed as text on the OLED display.
 
-Pressing the **Command button** switches to *Command* mode; pressing it again returns to *operation* mode."
+Pressing the **Command button** switches to **Command mode**; pressing it 
+again returns to **Operation  mode**."
 
 # Use
 
@@ -77,13 +79,15 @@ The sidetone can be turned off and on.
 * f -> (?) adjust sidetone frequency
 * v -> (?) adjust sidetone volume 1-100
 
-* r -> (?) adjust dit dat ration volume 2.3-3.7
+* r -> (?) adjust dit/dat ration volume 2.3-3.7
 * w -> (?) adjust Words Per Minute
-* 
+* l -> adjust weighting  controll dit high low time
+* H -> Set weighting and dah/dit ratio to defaults 50% 1:3
+
 * t -> tune mode, end with command mode
 * s -> save parameter to file
 
-* l  Adjust weighting
+* l ->   Adjust weighting
 
 * c -> show time
 * d -> show date
@@ -96,6 +100,56 @@ The sidetone can be turned off and on.
 
 
 ### CW timing 
+#### Calculating Morse Code Speed
+Doku source [kent-engineers](https://www.kent-engineers.com/codespeed.htm).
+
+The word PARIS is the standard for determing CW code speed. Each dit is one element, each dah is three elements, intra-character spacing is one element, inter-character spacing is three elements and inter-word spacing is seven elements. The word PARIS is exactly 50 elements.
+Note that after each dit/dah of the letter P -- one element spacing is used except the last one. (Intra-Character).
+After the last dit of P is sent, 3 elements are added (Inter-Character). After the word PARIS - 7 elements are used.
+Thus:
++ P = di da da di = 1 1 3 1 3 1 1 (3) = 14 elements 
++ A = di da = 1 1 3 (3) = 8 elements
++ R = di da di = 1 1 3 1 1 (3) = 10 elements
++ I = di di = 1 1 1 (3) = 6 elements
++ S = di di di = 1 1 1 1 1 [7] = 12 elements
++ Total = 50 elements
++ () = intercharacter
++ [] = interword 
+
+Calculation DOTime with the word **Paris**, normalized  ration_signal 1/3  weight_sign 50%
+* (dithc, ditlc, dathc, sum) Paris  
+* (10,     28,    12,   50)   
+* dithc -> signal "."
+* ditlc -> space
+* dathc -> signal "-"
+```
+self.PARIS = 50
+self.DOTtime_norm =  60.0 / self.wpm_t / self.PARIS * 1000  ## mili sekunden
+        
+self.paris_time = self.DOTtime_norm * (1 / 100 * 50 * 10 + 1 / 100 * (100 - 50) * 28 + 1 / 100 * 50 * 12/3 * 3)
+        
+        
+#calulation of normalized dotime
+self.nDOTtime = self.paris_time / (1 / 100 * self.weighting_t * 10 + 1 / 100 * (100 - self.weighting_t) * 28 + 1 / 100 * self.weighting_t * 12/3 * self.ratio_t)
+        
+self.DOTtime  = self.nDOTtime / 50 * (self.weighting_t)
+self.pDOTtime  = self.nDOTtime / 50 * (100-self.weighting_t)
+```
+>[NOTE]
+> When the reference word PARIS is calculated with a different ratio or weighting, the typing speed in words per minute (wpm) may vary slightly.
+
+## Times between Characters and Word
+>[NOTE]
+> There may be input errors and thus the loss of characters if the timing between characters and words is not maintained.
+
+### timing Wait for direct or latched paddle press
+The times are set in the source code, but you can, of course, adjust them to your preferences.
+
+```
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 4.5):  # Word space time
+            if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 1.5): # chare space time
+```
+
 #### RATIO 
 With command **r** you can adjust the length(DASH)/length(DOT) ratio
 1.3 to 6
@@ -219,6 +273,8 @@ KIS -> Keep It Simple
 * Button for WPM (words per minute)
 * Option for external command LED
 
+## touch sensor
+In order for the touch sensor to function properly, a minimum size of metal surface is required so that the finger establishes good contact.
 ## Future
 
 ### Some Ideas / Options on Demand?
