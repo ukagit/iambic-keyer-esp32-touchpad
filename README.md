@@ -1,5 +1,5 @@
 # Iambic Keyer for ESP32 with TouchPad
-+ VERSION = "0.964 20.12.23" 
++ VERSION = "0.965 23.12.23"
 
 ### IAMBIC keyer in MicroPython for ESP32
 
@@ -87,10 +87,11 @@ The sidetone can be turned off and on.
 * t -> tune mode, end with command mode
 * s -> save parameter to file
 
-* l ->   Adjust weighting
+* l ->  Adjust weighting
 
-* c -> show time
-* d -> show date
+* c -> show time real time or update 
+ 
+* d -> decoder verbose on/off  
 
 * / -> print json data file
 
@@ -161,6 +162,7 @@ With command **w** , wpm (Words Per Minute) you can adjust the cw speed.
 ### Query Parameters ?
 
 
+
 1. Press **command button**.
 1. Send the **letter** "?" followed by the **letters** of the parameter. In response,
    the value of the parameter is sent. You remain in command mode.
@@ -200,6 +202,17 @@ After changing parameters, don't forget to execute the save command.
 4. When everything works as intended, save the program as main.py
 5. If the JSON file is wrong, you can start in factory mode (hold command button while booting)
 
+## Decoder verbose on/off 
+
+ **command d** enables or disables the verbose detail of the error message when a CW character cannot be decoded.   
+ In the lengthy output, the CW code is also displayed in detail, which aids in practicing CW characters.   
+ If errors are displayed, it is often because the character spacing has not been maintained. The time is now set to 1.5 dit time.
+
+* short message ?
+* long message (-.-.--.-?)
+```
+if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 1.5): # chare space time
+``` 
 ## Error (-.-.--.-?)
 
 If you enter a letter incorrectly or the character spacing is not correct, the character will not be recognized and a ?
@@ -209,6 +222,14 @@ attached
 
 That helps to send correct CW code with proper character and word spacing timing.
 
+## Ticker display
+The "ticker display" outputs the entered text as a scrolling text.
+
+## Message of the day string
+You can define  "motd" the "Message of the day string" that is displayed when you first turn it on.
+``` 
+motd  = "dl2dbg "+ VERSION
+```
 ## Configuration
 
 Main parameters are set up in JSON file.

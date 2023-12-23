@@ -1,4 +1,5 @@
-VERSION = "0.964 20.12.23" #speed controll command r,l,h 
+VERSION = "0.965 23.12.23" # ticker display and motd, new comand "d" decoder verbose on/off  
+#VERSION = "0.964 20.12.23" #speed controll command r,l,h 
 # 5.12.23 version 0.963 test ok :-)
 # 4.12.23 version 0.962 weighting 
 # 2.12.23 version 0.961 wpm issu is solve
@@ -50,6 +51,23 @@ import utime  # utime is the micropython brother of time
 import time
 import ujson
 
+ 
+class Ticker():
+    def __init__(self):
+        self.basis_string = ""
+    def clear_buffer():
+        self.basis_string = ""
+        
+    def fifo_buffer(self, txt):
+        self.basis_string = self.basis_string + str(txt)
+
+        # Länge auf 10 Zeichen begrenzen, indem am Anfang abgeschnitten wird
+        if len(self.basis_string) >= 15:
+            self.basis_string = self.basis_string[-15:]
+         
+        return self.basis_string
+
+        
 
 class ESP32_BLE():
     def __init__(self, name):
@@ -112,7 +130,9 @@ class ESP32_BLE():
         BLE_UART = (BLE_NUS, (BLE_TX, BLE_RX,))
         SERVICES = (BLE_UART,)
         ((self.tx, self.rx,),) = self.ble.gatts_register_services(SERVICES)
+        
 
+        
     def send(self, data):
         if is_ble_connected:
             self.ble.gatts_notify(0, self.tx, data + '\n')
@@ -165,6 +185,18 @@ class CONSOLE_Print():
 
     def print_dark(self):  # dark display
         pass
+    
+    def print_ticker_oled(self,txt,inv):
+    
+        pass
+    
+    def print_ticker_no_oled(self, data, inv):
+        if inv != 0:
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        #ble.send(data)
+        if inv != 0:
+            print(f'\033[0m')
 
 
 ##################################################
@@ -208,6 +240,24 @@ class OLED_Print():
         self.oled.show()
         if inv != 0:
             print(f'\033[0m')
+            
+    def print_ticker_oled(self,txt,inv):
+    
+        self.oled.fill(0)  # Lösche den Bildschirm
+        self.oled.rotate(0)
+        self.oled.invert(inv)
+        self.oled.text(tik.fifo_buffer(txt) ,1,1)
+        self.oled.show()
+    
+    
+    def print_ticker_no_oled(self, data, inv):
+        if inv != 0:
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        ble.send(data)
+        if inv != 0:
+            print(f'\033[0m')
+    
 
 
 ##################################################
@@ -231,6 +281,17 @@ class BLE_Print():
     def print_dark(self):  # dark display
         pass
 
+    def print_ticker_oled(self,txt,inv):
+    
+        pass
+    
+    def print_ticker_no_oled(self, data, inv):
+        if inv != 0:
+            print(f'\033[31m')  # print invers "red"
+        print(data)
+        ble.send(data)
+        if inv != 0:
+            print(f'\033[0m')
 
 #
 
@@ -256,12 +317,16 @@ def encode(char):
 decodings = {}
 
 
-def decode(char):
+def decode(char,verbose):
     global decodings
     if char in decodings:
         return decodings[char]
     else:
-        return '(' + char + '?)'
+        if verbose:
+            return '(' + char + '?)'
+        else:
+            return '?'
+    
 
 
 def MAP(pattern, letter):
@@ -430,6 +495,7 @@ class command_button():
         
         if iambic.tx_enable:
                             txopt.on()
+        
 
     def button_state(self):
 
@@ -665,6 +731,9 @@ i -> TX_opt enable(on) disable(off)
 
 o -> Sidetone toggle (on) (off)
 
+ 
+c -> clock show time or uptime
+d -> decoder help info  toggle (on) (off) (-.-.--.-?) or ?
 
 f -> adjust sidetone frequenz
 v -> adjust sidetone volume 1-100
@@ -744,6 +813,7 @@ x -> exit Command mode
         self.cq_liste = ["", "", "", "", "", "", ""]
 
         self.tx_enable = 0
+        self.decoder_enable = 0
        
         self.sidetone_enable = 1
         self.sidetone_freq = 700  #
@@ -809,6 +879,7 @@ x -> exit Command mode
         self.set_data("sidetone_volume", self.sidetone_volume)
 
         self.set_data("tx_enamble", self.tx_enable)
+        self.set_data("decoder_enable", self.decoder_enable)
       
 
         self.set_data("threshold_key", self.threshold_key)
@@ -831,9 +902,10 @@ x -> exit Command mode
         oe.print_smal("sidetone_volume :" + str(self.sidetone_volume), 0)
 
         oe.print_smal("tx_enamble      :" + str(self.tx_enable), 0)
+        oe.print_smal("decoder_enable  :" + str(self.decoder_enable), 0)
         
 
-        oe.print_smal("threshold_key      :" + str(self.threshold_key), 0)
+        oe.print_smal("threshold_key   :" + str(self.threshold_key), 0)
         oe.print_smal("cq_txt_liste     :" + str(self.cq_liste), 0)
 
         oe.print_smal("", 0)
@@ -911,7 +983,7 @@ x -> exit Command mode
         cb.button_state_short_command()  ## Comand button WPM  abfragen
 
         # clear display when ideal
-        if w_ideal.diff() >= 3 and cb.comannd_state == 0:
+        if w_ideal.diff() >= 7 and cb.comannd_state == 0:
             oe.print_dark()
             w_ideal.update()
 
@@ -1107,7 +1179,9 @@ x -> exit Command mode
                 if self.in_word:
                     self.in_word = False
 
-                    oe.print_smal(self.word, 0)
+                    #oe.print_smal(self.word, 0)
+                    oe.print_ticker_no_oled(self.word, 0) # print word to console/ble, not to ticker oled
+                    oe.print_ticker_oled(" ", 0) # print "space" char for ticker
                     self.word = ""
 
             if utime.ticks_ms() > (self.ktimer_end + cw_time.dit_time() * 1.5): # chare space time
@@ -1117,12 +1191,14 @@ x -> exit Command mode
 
                     self.deep_sleep = False
                     self.deep_sleep_timer = utime.ticks_ms()  # timmer aktualisieren
-                    self.word = self.word + decode(self.char)
+                    self.word = self.word + decode(self.char,self.decoder_enable)
+                    
+                    oe.print_ticker_oled(decode(self.char,self.decoder_enable),0) # print char for ticker
 
                     # if cb.comannd_stare_wpm == 1:
 
                     if cb.comannd_state == 1:  # "1" ->comand mode
-                        Char = decode(self.char)
+                        Char = decode(self.char,self.decoder_enable)
                         # comand mode ----------------
                         if Char == "i":  # TX enable(on) disable(off)
                             oe.print_smal("i tx enable", cb.comannd_state)
@@ -1145,6 +1221,29 @@ x -> exit Command mode
                                     txopt.off()
 
                                 cb.button_command_off()
+                                
+                        if Char == "d":  # decoder help enable(on) disable(off)
+                            oe.print_smal("d decoder help", cb.comannd_state)
+                            if self.request == 1:
+
+                                if self.decoder_enable:
+                                    text2beep("on")
+                                else:
+                                    text2beep("off")
+                                self.char = ""
+                            else:
+                                self.decoder_enable = not self.decoder_enable
+                                if self.decoder_enable:
+                                    txopt.on()
+                                    oe.print_smal("d decoder help:on", cb.comannd_state)
+                                    text2beep("on")
+                                else:
+                                    text2beep("off")
+                                    oe.print_smal("d decoder help:off", cb.comannd_state)
+                                    txopt.off()
+
+                                cb.button_command_off()
+                                
 
 
 
@@ -1194,20 +1293,7 @@ x -> exit Command mode
                             # text2beep(formatted_time)
                             cb.button_command_off()
 
-                        elif Char == "d":  # day mode
-
-                            current_time = utime.gmtime()
-
-                            # Format the time
-                            formatted_time = "   {:02}.{:02}.{:02}".format(
-                                current_time[2],  # day
-                                current_time[1],  # month
-                                current_time[0]  # year
-                            )
-                            oe.print_big(formatted_time, cb.comannd_state)
-                            text2beep("time")
-                            # text2beep(formatted_time)
-                            cb.button_command_off()
+        
                             
                         elif Char == "h":  # Set weighting and dah to dit ratio to defaults
                             
@@ -1397,7 +1483,7 @@ x -> exit Command mode
 
 # transmit pattern
 def play(pattern):
-    print(f"play-DOTtime:{cw_time.dit_time()}, {cw_time.pdit_time()}")
+    #print(f"play-DOTtime:{cw_time.dit_time()}, {cw_time.pdit_time()}")
     for sound in pattern:
         if sound == '.':
             cw(True)
@@ -1487,11 +1573,12 @@ ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32
 #ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
 #oe = CONSOLE_Print() # print only console
-# oe = OLED_Print()  # print with oled display and BLE
-oe = BLE_Print()    # now OLED,  only print and BLE
+oe = OLED_Print()  # print with oled display and BLE
+#oe = BLE_Print()    # now OLED,  only print and BLE
 
 # user class
 
+tik = Ticker()
 w_ideal = watch_ideal()
 
 txopt = tx_opt(tx_opt_pin)
@@ -1503,8 +1590,17 @@ cb = command_button(touchPad_command_pin, touchPad_wpm_pin, onboard_led, extern_
 iambic = Iambic(touchPad_dit_pin, touchPad_dah_pin)
 
 oe.print_big("Keyer ready", 0)
-sleep(1)
 text2beep("r")  # ready
+sleep(0.1)
+
+#"Message of the day string"
+motd  = "Merry Christmas and a Happy New Year      " + VERSION
+#motd  = "dl2dbg "+ VERSION
+for x in motd:
+    oe.print_ticker_oled(x,0) 
+    sleep(0.1)
+    
+
 
 # --------
 while True:
