@@ -1,4 +1,5 @@
-VERSION = "0.965 23.12.23" # ticker display and motd, new comand "d" decoder verbose on/off  
+VERSION = "0.966 2.1.24" # remove deep sleep mode
+#VERSION = "0.965 23.12.23" # ticker display and motd, new comand "d" decoder verbose on/off  
 #VERSION = "0.964 20.12.23" #speed controll command r,l,h 
 # 5.12.23 version 0.963 test ok :-)
 # 4.12.23 version 0.962 weighting 
@@ -42,7 +43,7 @@ import freesans20  # FreeSans Font
 import machine
 
 from machine import TouchPad
-# from machine import deepsleep
+
 from time import sleep
 import esp32
 import ubluetooth
@@ -984,6 +985,9 @@ x -> exit Command mode
 
         # clear display when ideal
         if w_ideal.diff() >= 7 and cb.comannd_state == 0:
+            self.ktimer = 0
+            # 2.1.24 auf null setzen weil der timer overflow zuschlagen kann wenn man zulange nichts macht
+            # da der wert 0 ist wird beim nächtse aufruf time.ticks_ms() neu abgefragt und neu gesetzt. 
             oe.print_dark()
             w_ideal.update()
 
@@ -1189,8 +1193,7 @@ x -> exit Command mode
                 if self.in_char:
                     self.in_char = False
 
-                    self.deep_sleep = False
-                    self.deep_sleep_timer = utime.ticks_ms()  # timmer aktualisieren
+                  
                     self.word = self.word + decode(self.char,self.decoder_enable)
                     
                     oe.print_ticker_oled(decode(self.char,self.decoder_enable),0) # print char for ticker
@@ -1594,7 +1597,7 @@ text2beep("r")  # ready
 sleep(0.1)
 
 #"Message of the day string"
-motd  = "Merry Christmas and a Happy New Year      " + VERSION
+motd  = "uli dl2dbg " + VERSION
 #motd  = "dl2dbg "+ VERSION
 for x in motd:
     oe.print_ticker_oled(x,0) 

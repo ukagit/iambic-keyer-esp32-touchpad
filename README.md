@@ -1,5 +1,5 @@
 # Iambic Keyer for ESP32 with TouchPad
-+ VERSION = "0.965 23.12.23"
++ VERSION = "0.966 2.1.24" 
 
 ### IAMBIC keyer in MicroPython for ESP32
 
