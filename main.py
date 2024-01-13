@@ -1,4 +1,5 @@
-VERSION = "0.966 2.1.24" # remove deep sleep mode
+VERSION = "0.967 13.1.24" # ticker change to scolling display 
+#VERSION = "0.966 12.1.24" # remove deep sleep mode
 #VERSION = "0.965 23.12.23" # ticker display and motd, new comand "d" decoder verbose on/off  
 #VERSION = "0.964 20.12.23" #speed controll command r,l,h 
 # 5.12.23 version 0.963 test ok :-)
@@ -56,15 +57,15 @@ import ujson
 class Ticker():
     def __init__(self):
         self.basis_string = ""
-    def clear_buffer():
+    def clear_buffer(self):
         self.basis_string = ""
         
     def fifo_buffer(self, txt):
         self.basis_string = self.basis_string + str(txt)
 
         # Länge auf 10 Zeichen begrenzen, indem am Anfang abgeschnitten wird
-        if len(self.basis_string) >= 15:
-            self.basis_string = self.basis_string[-15:]
+        if len(self.basis_string) >= 45:
+            self.basis_string = self.basis_string[-45:]
          
         return self.basis_string
 
@@ -242,14 +243,32 @@ class OLED_Print():
         if inv != 0:
             print(f'\033[0m')
             
-    def print_ticker_oled(self,txt,inv):
+    def print_ticker_oled_old(self,txt,inv):
     
         self.oled.fill(0)  # Lösche den Bildschirm
         self.oled.rotate(0)
         self.oled.invert(inv)
         self.oled.text(tik.fifo_buffer(txt) ,1,1)
         self.oled.show()
+   
+    def print_ticker_oled(self,txt,inv):
+        buffer = tik.fifo_buffer(txt)
+        
+        characters_per_line = 15
+        # Berechne die Anzahl der Zeilen basierend auf der Buffergröße
+        num_lines = (len(buffer) - 1) // characters_per_line + 1
     
+        self.oled.fill(0)  # Lösche den Bildschirm
+        self.oled.rotate(0)
+        for i in range(num_lines):
+            start_index = i * characters_per_line
+            end_index = (i + 1) * characters_per_line
+            line_content = buffer[start_index:end_index]
+                         
+            self.oled.text(line_content ,1,i*10)
+            
+        self.oled.show()
+        
     
     def print_ticker_no_oled(self, data, inv):
         if inv != 0:
@@ -1152,7 +1171,9 @@ x -> exit Command mode
                         else:
                             self.cq = 0
 
-                        oe.print_smal("" + self.cq_liste[self.cq], cb.comannd_state)
+                       # oe.print_smal("" + self.cq_liste[self.cq], cb.comannd_state)
+                        tik.clear_buffer()
+                        oe.print_ticker_oled("" + self.cq_liste[self.cq],0)
                         beep(".")
 
                     elif self.state_key_dit() == self.LOW:  # transmit off
@@ -1572,8 +1593,8 @@ print("keyer")
 
 # setting different hardware
 
-ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
-#ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
+#ble = ESP32_BLE("ESP32BLE_CW")  # BLE  enable # use Serial Terminal like "esp32 ble terminal  on iphone"
+ble = ESP32_BLE_pass("ESP32BLE_CW") # BLE  disable  an empty class definition
 
 #oe = CONSOLE_Print() # print only console
 oe = OLED_Print()  # print with oled display and BLE
@@ -1601,9 +1622,9 @@ motd  = "uli dl2dbg " + VERSION
 #motd  = "dl2dbg "+ VERSION
 for x in motd:
     oe.print_ticker_oled(x,0) 
-    sleep(0.1)
-    
-
+    sleep(0.02)
+sleep(0.5) #display time
+tik.clear_buffer() # buffer clear clear display
 
 # --------
 while True:

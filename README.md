@@ -1,6 +1,5 @@
 # Iambic Keyer for ESP32 with TouchPad
-+ VERSION = "0.966 2.1.24" 
-
++ VERSION = "0.967 13.1.24" # ticker change to scolling display 
 ### IAMBIC keyer in MicroPython for ESP32
 
 * Iambic Mode A/B
